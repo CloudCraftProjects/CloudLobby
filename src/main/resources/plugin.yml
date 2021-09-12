@@ -1,5 +1,5 @@
-name: Lobby
-version: @version@
+name: CloudLobby
+version: ${version}
 main: tk.booky.lobbypvp.LobbyMain
 api-version: 1.13
 prefix: LPVP
