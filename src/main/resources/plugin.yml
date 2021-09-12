@@ -1,8 +1,7 @@
 name: CloudLobby
 version: ${version}
-main: tk.booky.lobbypvp.LobbyMain
+main: tk.booky.cloudlobby.CloudLobbyMain
 api-version: 1.13
-prefix: LPVP
 load: POSTWORLD
 authors: [ booky10 ]
 website: https://booky.tk/

@@ -1,8 +1,13 @@
-package tk.booky.lobbypvp;
+package tk.booky.cloudlobby;
 
 import me.rockyhawk.commandpanels.api.PanelOpenedEvent;
 import net.kyori.adventure.text.Component;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.EntityType;
@@ -14,7 +19,15 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.player.*;
+import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.event.player.PlayerToggleFlightEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.BoundingBox;
@@ -25,7 +38,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public final class LobbyMain extends JavaPlugin implements Listener {
+public final class CloudLobbyMain extends JavaPlugin implements Listener {
 
     private static final BoundingBox box = new BoundingBox(946, 81, -256, 977, 92, -287);
     private static final Map<UUID, Map<Block, Integer>> blockSchedulers = new HashMap<>();
@@ -183,9 +196,9 @@ public final class LobbyMain extends JavaPlugin implements Listener {
             case RIGHT_CLICK_BLOCK:
                 if (event.getPlayer().getGameMode().equals(GameMode.CREATIVE)) {
                     break;
-                } else if(event.getClickedBlock() != null) {
+                } else if (event.getClickedBlock() != null) {
                     if (event.getClickedBlock().getX() == 1019) {
-                        if(event.getClickedBlock().getY() == 80) {
+                        if (event.getClickedBlock().getY() == 80) {
                             if (event.getClickedBlock().getZ() == -211) {
                                 break;
                             }
