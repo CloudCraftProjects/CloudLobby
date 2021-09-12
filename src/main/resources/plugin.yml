@@ -5,4 +5,4 @@ api-version: 1.13
 load: POSTWORLD
 authors: [ booky10 ]
 website: https://booky.tk/
-depend: [ CommandPanels ]
+depend: [ CommandAPI ]
