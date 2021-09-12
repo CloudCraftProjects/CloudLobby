@@ -1,0 +1,9 @@
+name: Lobby
+version: @version@
+main: tk.booky.lobbypvp.LobbyMain
+api-version: 1.13
+prefix: LPVP
+load: POSTWORLD
+authors: [ booky10 ]
+website: https://booky.tk/
+depend: [ CommandPanels ]
