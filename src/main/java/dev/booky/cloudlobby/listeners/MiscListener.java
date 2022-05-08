@@ -2,6 +2,7 @@ package dev.booky.cloudlobby.listeners;
 // Created by booky10 in Lobby (13:48 12.09.21)
 
 import dev.booky.cloudlobby.utils.CloudLobbyManager;
+import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Tag;
 import org.bukkit.entity.EntityType;
@@ -19,7 +20,8 @@ public record MiscListener(CloudLobbyManager manager) implements Listener {
     @EventHandler
     public void onGameModeChange(PlayerGameModeChangeEvent event) {
         if (event.getNewGameMode() != GameMode.ADVENTURE) return;
-        event.getPlayer().setAllowFlight(true);
+        if (event.getCause() == PlayerGameModeChangeEvent.Cause.DEFAULT_GAMEMODE) return;
+        Bukkit.getScheduler().runTask(manager.plugin(), () -> event.getPlayer().setAllowFlight(true)); // Delayed by one tick
     }
 
     @EventHandler

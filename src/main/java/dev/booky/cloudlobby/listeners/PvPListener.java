@@ -21,10 +21,8 @@ public record PvPListener(CloudLobbyManager manager) implements Listener {
         handlePvp:
         {
             if (event.getEntityType() != EntityType.PLAYER) break handlePvp;
-            if (event.getCause() == DamageCause.FALL) break handlePvp;
-            if (event.getFinalDamage() <= 0) break handlePvp;
-
-            if (!manager.config().pvpBoxBox().contains(event.getEntity().getLocation().toVector())) return;
+            if (event.getCause() == DamageCause.FALL || event.getFinalDamage() <= 0) break handlePvp;
+            if (!manager.config().pvpBoxBox().contains(event.getEntity().getLocation().toVector())) break handlePvp;
 
             if (!(event instanceof EntityDamageByEntityEvent byEntityEvent)) {
                 manager.lastDamages().put(event.getEntity().getUniqueId(), System.currentTimeMillis());
