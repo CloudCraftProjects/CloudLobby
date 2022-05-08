@@ -1,12 +1,12 @@
-package tk.booky.cloudlobby.commands.pvpbox;
+package dev.booky.cloudlobby.commands.pvpbox;
 // Created by booky10 in Lobby (17:57 12.09.21)
 
+import dev.booky.cloudlobby.utils.CloudLobbyManager;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.LiteralArgument;
 import dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException;
 import dev.jorel.commandapi.executors.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import tk.booky.cloudlobby.utils.CloudLobbyManager;
 
 public class GetPvpBoxExitDelaySubCommand extends CommandAPICommand implements CommandExecutor {
 
@@ -25,9 +25,9 @@ public class GetPvpBoxExitDelaySubCommand extends CommandAPICommand implements C
         long milliseconds = manager.config().pvpBoxExitDelay(), ticks = milliseconds / 50, seconds = milliseconds / 1000;
 
         if (milliseconds == 0) {
-            manager.fail("The pvp box exit delay is currently disabled.");
-        } else {
-            manager.message(sender, "The pvp box exit delay is currently at " + milliseconds + " milliseconds (" + ticks + " ticks, " + seconds + " seconds).");
+            manager.fail("The pvp box exit delay is currently disabled");
         }
+
+        manager.message(sender, "The pvp box exit delay is currently at " + milliseconds + " milliseconds (" + ticks + " ticks, " + seconds + " seconds)");
     }
 }

@@ -1,12 +1,10 @@
 plugins {
-    `java-library`
-    `maven-publish`
-
-    id("xyz.jpenilla.run-paper") version "1.0.4"
+    id("java-library")
+    id("maven-publish")
 }
 
-group = "tk.booky"
-version = "1.6.0"
+group = "dev.booky"
+version = "1.7.0"
 
 repositories {
     maven("https://papermc.io/repo/repository/maven-public/")
@@ -17,7 +15,7 @@ repositories {
 
 dependencies {
     api("io.papermc.paper:paper-api:1.17.1-R0.1-SNAPSHOT")
-    api("dev.jorel.commandapi:commandapi-core:6.3.0")
+    api("dev.jorel.commandapi:commandapi-core:8.1.0")
     api("com.mojang:brigadier:1.0.18")
 }
 
@@ -27,8 +25,20 @@ tasks {
             expand("version" to project.version)
         }
     }
+}
 
-    runServer {
-        minecraftVersion("1.17.1")
+java {
+    withSourcesJar()
+    withJavadocJar()
+
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
+publishing {
+    publications.create<MavenPublication>("maven") {
+        artifactId = project.name.toLowerCase()
+        from(components["java"])
     }
 }

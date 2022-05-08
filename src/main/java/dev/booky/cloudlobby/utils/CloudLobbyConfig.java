@@ -1,4 +1,4 @@
-package tk.booky.cloudlobby.utils;
+package dev.booky.cloudlobby.utils;
 // Created by booky10 in Lobby (14:13 12.09.21)
 
 import org.bukkit.Location;

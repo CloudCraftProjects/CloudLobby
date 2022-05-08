@@ -1,6 +1,7 @@
-package tk.booky.cloudlobby.commands.pvpbox;
+package dev.booky.cloudlobby.commands.pvpbox;
 // Created by booky10 in Lobby (17:59 12.09.21)
 
+import dev.booky.cloudlobby.utils.CloudLobbyManager;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.LiteralArgument;
 import dev.jorel.commandapi.arguments.LocationArgument;
@@ -10,7 +11,6 @@ import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
-import tk.booky.cloudlobby.utils.CloudLobbyManager;
 
 public class SetBoxSubCommand extends CommandAPICommand implements CommandExecutor {
 
@@ -23,8 +23,7 @@ public class SetBoxSubCommand extends CommandAPICommand implements CommandExecut
         withArguments(
             new LiteralArgument("set"),
             new LocationArgument("pos1", LocationType.PRECISE_POSITION),
-            new LocationArgument("pos2", LocationType.PRECISE_POSITION)
-        );
+            new LocationArgument("pos2", LocationType.PRECISE_POSITION));
 
         withPermission("cloudlobby.command.pvpbox.box.set").executes(this);
     }
@@ -36,10 +35,11 @@ public class SetBoxSubCommand extends CommandAPICommand implements CommandExecut
 
         if (position1.equals(position2)) {
             manager.config().pvpBoxBox(new BoundingBox());
-            manager.message(sender, "The pvp box has been disabled.");
-        } else {
-            manager.config().pvpBoxBox(BoundingBox.of(position1, position2));
-            manager.message(sender, "The pvp box has been updated.");
+            manager.message(sender, "The pvp box has been disabled");
+            return;
         }
+
+        manager.config().pvpBoxBox(BoundingBox.of(position1, position2));
+        manager.message(sender, "The pvp box has been updated");
     }
 }

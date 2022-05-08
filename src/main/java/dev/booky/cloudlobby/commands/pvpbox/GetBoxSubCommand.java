@@ -1,13 +1,13 @@
-package tk.booky.cloudlobby.commands.pvpbox;
+package dev.booky.cloudlobby.commands.pvpbox;
 // Created by booky10 in Lobby (17:59 12.09.21)
 
+import dev.booky.cloudlobby.utils.CloudLobbyManager;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.LiteralArgument;
 import dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException;
 import dev.jorel.commandapi.executors.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.util.BoundingBox;
-import tk.booky.cloudlobby.utils.CloudLobbyManager;
 
 public class GetBoxSubCommand extends CommandAPICommand implements CommandExecutor {
 
@@ -26,12 +26,11 @@ public class GetBoxSubCommand extends CommandAPICommand implements CommandExecut
         BoundingBox box = manager.config().pvpBoxBox();
 
         if (box.getMin().equals(box.getMax())) {
-            manager.fail("No pvp box is set currently.");
-        } else {
-            manager.message(sender, String.format("The current pvp box reaches from %s %s %s to %s %s %s.",
-                box.getMinX(), box.getMinY(), box.getMinZ(),
-                box.getMaxX(), box.getMaxY(), box.getMaxZ()
-            ));
+            manager.fail("No pvp box is set currently");
         }
+
+        manager.message(sender, String.format("The current pvp box reaches from %s %s %s to %s %s %s",
+            box.getMinX(), box.getMinY(), box.getMinZ(),
+            box.getMaxX(), box.getMaxY(), box.getMaxZ()));
     }
 }

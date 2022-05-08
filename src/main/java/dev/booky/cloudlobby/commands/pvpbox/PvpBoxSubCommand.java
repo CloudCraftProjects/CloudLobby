@@ -1,8 +1,8 @@
-package tk.booky.cloudlobby.commands.pvpbox;
+package dev.booky.cloudlobby.commands.pvpbox;
 // Created by booky10 in Lobby (17:53 12.09.21)
 
+import dev.booky.cloudlobby.utils.CloudLobbyManager;
 import dev.jorel.commandapi.CommandAPICommand;
-import tk.booky.cloudlobby.utils.CloudLobbyManager;
 
 public class PvpBoxSubCommand extends CommandAPICommand {
 

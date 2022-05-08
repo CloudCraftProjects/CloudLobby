@@ -1,18 +1,18 @@
-package tk.booky.cloudlobby;
+package dev.booky.cloudlobby;
 // Created by booky10 in Lobby (14:23 12.09.21)
 
+import dev.booky.cloudlobby.listeners.MiscListener;
+import dev.booky.cloudlobby.listeners.MoveListener;
+import dev.booky.cloudlobby.utils.CloudLobbyConfig;
 import dev.jorel.commandapi.CommandAPI;
 import dev.jorel.commandapi.CommandAPICommand;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
-import tk.booky.cloudlobby.commands.CloudLobbyRootCommand;
-import tk.booky.cloudlobby.listeners.DoubleJumpListener;
-import tk.booky.cloudlobby.listeners.JoinQuitListener;
-import tk.booky.cloudlobby.listeners.MiscListener;
-import tk.booky.cloudlobby.listeners.MoveListener;
-import tk.booky.cloudlobby.listeners.PvPListener;
-import tk.booky.cloudlobby.utils.CloudLobbyConfig;
-import tk.booky.cloudlobby.utils.CloudLobbyManager;
+import dev.booky.cloudlobby.commands.CloudLobbyRootCommand;
+import dev.booky.cloudlobby.listeners.DoubleJumpListener;
+import dev.booky.cloudlobby.listeners.JoinQuitListener;
+import dev.booky.cloudlobby.listeners.PvPListener;
+import dev.booky.cloudlobby.utils.CloudLobbyManager;
 
 import java.io.File;
 

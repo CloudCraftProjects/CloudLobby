@@ -1,4 +1,4 @@
-package tk.booky.cloudlobby.utils;
+package dev.booky.cloudlobby.utils;
 // Created by booky10 in Lobby (14:00 12.09.21)
 
 import com.mojang.brigadier.LiteralMessage;
@@ -79,7 +79,7 @@ public class CloudLobbyManager {
             }
         }
 
-        throw new IllegalStateException("No overworld could be found!");
+        throw new IllegalStateException("No overworld could be found");
     }
 
     public long getRemainingCooldown(UUID uuid) {

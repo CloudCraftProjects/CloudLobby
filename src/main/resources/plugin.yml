@@ -1,8 +1,8 @@
 name: CloudLobby
 version: ${version}
-main: tk.booky.cloudlobby.CloudLobbyMain
-api-version: 1.13
+main: dev.booky.cloudlobby.CloudLobbyMain
+api-version: 1.18
 load: POSTWORLD
 authors: [ booky10 ]
-website: https://booky.tk/
+website: https://booky.dev/
 depend: [ CommandAPI ]
