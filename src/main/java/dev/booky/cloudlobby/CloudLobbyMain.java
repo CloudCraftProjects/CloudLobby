@@ -1,23 +1,28 @@
 package dev.booky.cloudlobby;
 // Created by booky10 in Lobby (14:23 12.09.21)
 
-import dev.booky.cloudlobby.listeners.MiscListener;
-import dev.booky.cloudlobby.listeners.MoveListener;
-import org.bukkit.Bukkit;
-import org.bukkit.plugin.ServicePriority;
-import org.bukkit.plugin.java.JavaPlugin;
+import dev.booky.cloudcore.util.TranslationLoader;
 import dev.booky.cloudlobby.commands.LobbyCommand;
 import dev.booky.cloudlobby.listeners.DoubleJumpListener;
 import dev.booky.cloudlobby.listeners.JoinQuitMessageListener;
+import dev.booky.cloudlobby.listeners.MiscListener;
+import dev.booky.cloudlobby.listeners.MoveListener;
 import dev.booky.cloudlobby.listeners.PvPListener;
+import org.bukkit.Bukkit;
+import org.bukkit.plugin.ServicePriority;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public final class CloudLobbyMain extends JavaPlugin {
 
+    private TranslationLoader i18nLoader;
     private CloudLobbyManager manager;
     private LobbyCommand command;
 
     @Override
     public void onLoad() {
+        this.i18nLoader = new TranslationLoader(this);
+        this.i18nLoader.load();
+
         this.manager = new CloudLobbyManager(this, this.getDataFolder().toPath());
     }
 
@@ -43,6 +48,9 @@ public final class CloudLobbyMain extends JavaPlugin {
     public void onDisable() {
         if (this.command != null) {
             this.command.unregister();
+        }
+        if (this.i18nLoader != null) {
+            this.i18nLoader.unload();
         }
     }
 }
