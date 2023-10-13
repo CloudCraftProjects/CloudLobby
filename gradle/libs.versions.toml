@@ -8,6 +8,8 @@ bstats = "3.0.2"
 
 cloudcore = "1.0.2-SNAPSHOT"
 
+caffeine = "3.1.8"
+
 commandapi = "9.2.0"
 debuggery = "1.5.1"
 
@@ -21,3 +23,5 @@ paper-api = { module = "io.papermc.paper:paper-api", version.ref = "paper" }
 bstats-bukkit = { module = "org.bstats:bstats-bukkit", version.ref = "bstats" }
 
 cloudcore = { module = "dev.booky:cloudcore", version.ref = "cloudcore" }
+
+caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }

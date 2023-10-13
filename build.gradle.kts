@@ -27,6 +27,14 @@ dependencies {
 
     implementation(libs.bstats.bukkit)
 
+    // downloaded at runtime using library loader
+    sequenceOf(
+        libs.caffeine
+    ).forEach {
+        compileOnlyApi(it)
+        library(it)
+    }
+
     compileOnlyApi(libs.cloudcore)
 
     // testserver dependency plugins (maven)

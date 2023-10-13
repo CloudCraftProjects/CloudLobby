@@ -54,6 +54,9 @@ public final class PvPListener implements Listener {
         if (!(event.getEntity() instanceof Player player)) {
             return;
         }
+        if (player.getGameMode() != GameMode.ADVENTURE) {
+            return;
+        }
 
         if (!this.manager.isPvpBox(player)) {
             event.setCancelled(true);
