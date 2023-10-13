@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "dev.booky"
-version = "1.7.1"
+version = "2.0.0"
 
 val plugin: Configuration by configurations.creating {
     isTransitive = false
