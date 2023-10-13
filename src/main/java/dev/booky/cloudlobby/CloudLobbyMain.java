@@ -3,63 +3,42 @@ package dev.booky.cloudlobby;
 
 import dev.booky.cloudlobby.listeners.MiscListener;
 import dev.booky.cloudlobby.listeners.MoveListener;
-import dev.booky.cloudlobby.utils.CloudLobbyConfig;
-import dev.jorel.commandapi.CommandAPI;
-import dev.jorel.commandapi.CommandAPICommand;
 import org.bukkit.Bukkit;
+import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
-import dev.booky.cloudlobby.commands.CloudLobbyRootCommand;
+import dev.booky.cloudlobby.commands.LobbyCommand;
 import dev.booky.cloudlobby.listeners.DoubleJumpListener;
-import dev.booky.cloudlobby.listeners.JoinQuitListener;
+import dev.booky.cloudlobby.listeners.JoinQuitMessageListener;
 import dev.booky.cloudlobby.listeners.PvPListener;
-import dev.booky.cloudlobby.utils.CloudLobbyManager;
 
-import java.io.File;
+public final class CloudLobbyMain extends JavaPlugin {
 
-public class CloudLobbyMain extends JavaPlugin {
-
-    private CloudLobbyConfig configuration;
-    private CommandAPICommand command;
     private CloudLobbyManager manager;
+    private LobbyCommand command;
 
     @Override
     public void onLoad() {
-        configuration = new CloudLobbyConfig(new File(getDataFolder(), "config.yml"));
-        manager = new CloudLobbyManager(configuration, this);
-        (command = new CloudLobbyRootCommand(manager)).register();
+        this.manager = new CloudLobbyManager(this, this.getDataFolder().toPath());
     }
 
     @Override
     public void onEnable() {
-        manager.loadOverworld();
+        this.command = new LobbyCommand(this.manager);
+        this.command.register();
 
-        if (configuration.reloadConfiguration().pvpBoxRespawn() == null) {
-            configuration.pvpBoxRespawn(manager.overworld().getSpawnLocation());
-        }
-        configuration.saveConfiguration();
+        Bukkit.getPluginManager().registerEvents(new DoubleJumpListener(this.manager), this);
+        Bukkit.getPluginManager().registerEvents(new JoinQuitMessageListener(), this);
+        Bukkit.getPluginManager().registerEvents(new MiscListener(), this);
+        Bukkit.getPluginManager().registerEvents(new MoveListener(this.manager), this);
+        Bukkit.getPluginManager().registerEvents(new PvPListener(this.manager), this);
 
-        Bukkit.getPluginManager().registerEvents(new DoubleJumpListener(manager), this);
-        Bukkit.getPluginManager().registerEvents(new JoinQuitListener(manager), this);
-        Bukkit.getPluginManager().registerEvents(new MiscListener(manager), this);
-        Bukkit.getPluginManager().registerEvents(new MoveListener(manager), this);
-        Bukkit.getPluginManager().registerEvents(new PvPListener(manager), this);
+        Bukkit.getServicesManager().register(CloudLobbyManager.class, this.manager, this, ServicePriority.Normal);
     }
 
     @Override
     public void onDisable() {
-        configuration.saveConfiguration();
-        CommandAPI.unregister(command.getName(), true);
-    }
-
-    public CloudLobbyConfig configuration() {
-        return configuration;
-    }
-
-    public CommandAPICommand command() {
-        return command;
-    }
-
-    public CloudLobbyManager manager() {
-        return manager;
+        if (this.command != null) {
+            this.command.unregister();
+        }
     }
 }

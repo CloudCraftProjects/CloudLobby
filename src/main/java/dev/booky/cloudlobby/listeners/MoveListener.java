@@ -1,87 +1,143 @@
 package dev.booky.cloudlobby.listeners;
 // Created by booky10 in Lobby (13:48 12.09.21)
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import dev.booky.cloudlobby.utils.CloudLobbyManager;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import dev.booky.cloudlobby.CloudLobbyManager;
+import io.papermc.paper.math.BlockPosition;
+import io.papermc.paper.math.Position;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
-import org.bukkit.util.BlockVector;
 
-import java.util.UUID;
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import static net.kyori.adventure.text.Component.text;
-import static net.kyori.adventure.text.format.NamedTextColor.GREEN;
-import static net.kyori.adventure.text.format.NamedTextColor.RED;
-import static org.bukkit.Bukkit.createBlockData;
-import static org.bukkit.Bukkit.getScheduler;
-import static org.bukkit.Material.AIR;
-import static org.bukkit.Material.BARRIER;
+import static net.kyori.adventure.text.Component.translatable;
 
 public class MoveListener implements Listener {
 
-    private static final BlockData BARRIER_DATA = createBlockData(BARRIER), AIR_DATA = createBlockData(AIR);
-    private final Multimap<UUID, BlockVector> blocked = HashMultimap.create();
+    private final Cache<ExitBlockKey, Boolean> exitBlockCache = CacheBuilder.newBuilder()
+            .expireAfterWrite(Duration.ofSeconds(1L).dividedBy(2L)) // half a second
+            .<ExitBlockKey, Boolean>removalListener(notif -> {
+                if (notif.getKey() != null) {
+                    notif.getKey().clearBarrier();
+                }
+            })
+            .build();
+
     private final CloudLobbyManager manager;
 
     public MoveListener(CloudLobbyManager manager) {
         this.manager = manager;
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onTeleport(PlayerTeleportEvent event) {
-        if (event.getCause() != TeleportCause.SPECTATE && manager.config().pvpBoxBox().contains(event.getFrom().toVector())) {
+        if (event.getCause() == TeleportCause.ENDER_PEARL
+                && this.manager.isPvpBox(event.getFrom())) {
             event.setCancelled(true);
         }
     }
 
     @EventHandler
     public void onMove(PlayerMoveEvent event) {
-        if (event.hasChangedBlock()) return;
-        if (event.getPlayer().getGameMode() != GameMode.ADVENTURE) return;
-
-        if (manager.config().pvpBoxBox().contains(event.getTo().toVector())) {
-            if (manager.config().pvpBoxBox().contains(event.getFrom().toVector())) return;
-            if (manager.hasExitCooldown(event.getPlayer().getUniqueId())) return;
-
-            event.getPlayer().setAllowFlight(false);
-            event.getPlayer().sendActionBar(text("You have entered the pvp arena", RED));
+        if (!event.hasChangedBlock()) {
             return;
         }
 
-        if (!manager.config().pvpBoxBox().contains(event.getFrom().toVector())) return;
-        long cooldown = manager.getRemainingCooldown(event.getPlayer().getUniqueId());
+        Player player = event.getPlayer();
+        if (player.getGameMode() != GameMode.ADVENTURE) {
+            return;
+        }
+
+        // check for pvp-box enter
+        if (this.manager.isPvpBox(event.getTo())) {
+            if (this.manager.isPvpBox(event.getFrom())) {
+                return;
+            }
+            // this message gets spammed if player tries to leave
+            // the box while still cooling down
+            if (this.manager.hasExitCooldown(player.getUniqueId())) {
+                return;
+            }
+            this.onPvpBoxEnter(player);
+            return;
+        }
+
+        if (this.manager.isPvpBox(event.getFrom())) {
+            this.onPvpBoxLeave(player, event.getTo());
+            return;
+        }
+    }
+
+    private void onPvpBoxEnter(Player player) {
+        player.setAllowFlight(false); // disable double-jump
+        player.sendActionBar(translatable("cl.pvp-box.enter"));
+    }
+
+    /**
+     * @return cancel move event
+     */
+    private boolean onPvpBoxLeave(Player player, Location to) {
+        long cooldown = this.manager.getRemainingExitCooldown(player.getUniqueId());
         if (cooldown <= 0) {
-            event.getPlayer().sendActionBar(text("You have left the pvp arena", GREEN));
-            event.getPlayer().setAllowFlight(true);
-            return;
+            // no cooldown, let them leave
+            player.sendActionBar(translatable("cl.pvp-box.leave"));
+            player.setAllowFlight(true); // enable double-jump
+            return false;
         }
 
-        event.setCancelled(true);
-        event.getPlayer().sendActionBar(text("You can't leave now", RED));
+        player.sendActionBar(translatable("cl.pvp-box.leave-cooldown"));
 
-        BlockVector bottomVector = event.getTo().toVector().toBlockVector();
-        if (blocked.containsEntry(event.getPlayer().getUniqueId(), bottomVector)) return;
+        BlockPosition bottomPos = to.toBlock();
+        BlockPosition topPos = bottomPos.offset(BlockFace.UP);
 
-        blocked.put(event.getPlayer().getUniqueId(), bottomVector);
-        Location topLocation = event.getTo().clone().add(0, 1, 0);
+        // this cache places blocks on write and removes them on expiry
+        ExitBlockKey blockKey = new ExitBlockKey(player, List.of(bottomPos, topPos));
+        this.exitBlockCache.put(blockKey, true);
 
-        event.getPlayer().sendBlockChange(event.getTo(), BARRIER_DATA);
-        event.getPlayer().sendBlockChange(topLocation, BARRIER_DATA);
+        return true; // teleport back!
+    }
 
-        getScheduler().runTaskLater(manager.plugin(), () -> {
-            if (event.getPlayer().isOnline()) {
-                event.getPlayer().sendBlockChange(event.getTo(), AIR_DATA);
-                event.getPlayer().sendBlockChange(topLocation, AIR_DATA);
+    private record ExitBlockKey(Player player, List<BlockPosition> blocks) {
+
+        private static final BlockData BARRIER_DATA = Material.BARRIER.createBlockData();
+        private static final BlockData AIR_DATA = Material.AIR.createBlockData();
+
+        private ExitBlockKey {
+            this.createBarrier();
+        }
+
+        public void createBarrier() {
+            this.sendUpdates(BARRIER_DATA);
+        }
+
+        public void clearBarrier() {
+            this.sendUpdates(AIR_DATA);
+        }
+
+        private void sendUpdates(BlockData data) {
+            if (!this.player.isOnline()) {
+                return; // player went offline
             }
 
-            blocked.remove(event.getPlayer().getUniqueId(), bottomVector);
-        }, cooldown / 50 + 5);
+            Map<Position, BlockData> updates = new HashMap<>(this.blocks.size());
+            for (BlockPosition position : this.blocks) {
+                updates.put(position, data);
+            }
+            this.player.sendMultiBlockChange(updates);
+        }
     }
 }

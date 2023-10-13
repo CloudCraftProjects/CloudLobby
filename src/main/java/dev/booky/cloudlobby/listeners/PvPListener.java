@@ -1,59 +1,82 @@
 package dev.booky.cloudlobby.listeners;
 // Created by booky10 in Lobby (13:48 12.09.21)
 
-import dev.booky.cloudlobby.utils.CloudLobbyManager;
-import org.bukkit.entity.EntityType;
+import dev.booky.cloudlobby.CloudLobbyManager;
+import io.papermc.paper.event.player.PrePlayerAttackEntityEvent;
+import org.bukkit.GameMode;
+import org.bukkit.Location;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 
-import static net.kyori.adventure.text.Component.text;
-import static net.kyori.adventure.text.format.NamedTextColor.RED;
+import static net.kyori.adventure.text.Component.translatable;
 
-public record PvPListener(CloudLobbyManager manager) implements Listener {
+public final class PvPListener implements Listener {
+
+    private final CloudLobbyManager manager;
+
+    public PvPListener(CloudLobbyManager manager) {
+        this.manager = manager;
+    }
 
     @EventHandler
-    public void onDamage(EntityDamageEvent event) {
-        handlePvp:
-        {
-            if (event.getEntityType() != EntityType.PLAYER) break handlePvp;
-            if (event.getCause() == DamageCause.FALL || event.getFinalDamage() <= 0) break handlePvp;
-            if (!manager.config().pvpBoxBox().contains(event.getEntity().getLocation().toVector())) break handlePvp;
-
-            if (!(event instanceof EntityDamageByEntityEvent byEntityEvent)) {
-                manager.lastDamages().put(event.getEntity().getUniqueId(), System.currentTimeMillis());
-                return;
-            }
-
-            if (byEntityEvent.getDamager().getType() != EntityType.PLAYER) {
-                manager.lastDamages().put(event.getEntity().getUniqueId(), System.currentTimeMillis());
-                return;
-            }
-
-            if (!manager.config().pvpBoxBox().contains(byEntityEvent.getDamager().getLocation().toVector())) return;
-
-            manager.lastDamages().put(event.getEntity().getUniqueId(), System.currentTimeMillis());
-            manager.lastDamages().put(byEntityEvent.getDamager().getUniqueId(), System.currentTimeMillis());
+    public void onAttack(PrePlayerAttackEntityEvent event) {
+        Player attacker = event.getPlayer();
+        if (attacker.getGameMode() != GameMode.ADVENTURE) {
             return;
         }
 
-        event.setCancelled(true);
-        event.setDamage(0);
+        if (!(event.getAttacked() instanceof Player attacked)) {
+            // instantly cancel if not attacking player
+            event.setCancelled(true);
+            return;
+        }
+
+        // cancel if either attacker or attacked is not in pvp box
+        if (!this.manager.isPvpBox(attacker)
+                || !this.manager.isPvpBox(attacked)) {
+            event.setCancelled(true);
+            return;
+        }
+
+        // attacker and attacked are both in pvp box
+        this.manager.resetExitCooldown(attacker.getUniqueId());
+        this.manager.resetExitCooldown(attacked.getUniqueId());
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onDamage(EntityDamageEvent event) {
+        if (!(event.getEntity() instanceof Player player)) {
+            return;
+        }
+
+        if (!this.manager.isPvpBox(player)) {
+            event.setCancelled(true);
+            return;
+        }
+
+        if (event.getCause() == DamageCause.FALL) {
+            // cancel fall damage in pvp box
+            event.setCancelled(true);
+        }
     }
 
     @EventHandler
     public void onDeath(PlayerDeathEvent event) {
-        manager.lastDamages().put(event.getEntity().getUniqueId(), 0L);
-        event.getEntity().sendActionBar(text("You have died", RED));
+        this.manager.removeExitCooldown(event.getPlayer().getUniqueId());
+        event.getEntity().sendActionBar(translatable("cl.pvp-box.died"));
     }
 
     @EventHandler
     public void onRespawn(PlayerRespawnEvent event) {
-        event.setRespawnLocation(manager.config().pvpBoxRespawn());
-        event.getPlayer().setAllowFlight(true);
+        Location respawnLoc = this.manager.getConfig().getPvpBox().getRespawnLocation();
+        if (respawnLoc != null) {
+            event.setRespawnLocation(respawnLoc);
+        }
     }
 }
