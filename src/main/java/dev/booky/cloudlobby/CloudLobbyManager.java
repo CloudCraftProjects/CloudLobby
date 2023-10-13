@@ -43,9 +43,7 @@ public final class CloudLobbyManager {
 
     public CloudLobbyManager(Plugin plugin, Path dataDir) {
         this.plugin = plugin;
-
         this.configPath = dataDir.resolve("config.yml");
-        this.reloadConfig();
     }
 
     public void reloadConfig() {

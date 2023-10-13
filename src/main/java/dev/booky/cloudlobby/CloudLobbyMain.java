@@ -23,6 +23,10 @@ public final class CloudLobbyMain extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        // config can't be loaded before enabling the plugin, as
+        // worlds aren't loaded yet and required for this
+        this.manager.reloadConfig();
+
         this.command = new LobbyCommand(this.manager);
         this.command.register();
 
