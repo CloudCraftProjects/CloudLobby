@@ -7,6 +7,7 @@ import dev.jorel.commandapi.arguments.AngleArgument;
 import dev.jorel.commandapi.arguments.LiteralArgument;
 import dev.jorel.commandapi.arguments.LocationArgument;
 import dev.jorel.commandapi.arguments.LocationType;
+import dev.jorel.commandapi.executors.CommandArguments;
 import dev.jorel.commandapi.executors.CommandExecutor;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
@@ -20,19 +21,19 @@ public class SetPvpBoxRespawnSubCommand extends CommandAPICommand implements Com
         this.manager = manager;
 
         withArguments(
-            new LiteralArgument("set"),
-            new LocationArgument("location", LocationType.PRECISE_POSITION),
-            new AngleArgument("yaw"),
-            new AngleArgument("pitch"));
+                new LiteralArgument("set"),
+                new LocationArgument("location", LocationType.PRECISE_POSITION),
+                new AngleArgument("yaw"),
+                new AngleArgument("pitch"));
 
         withPermission("cloudlobby.command.pvpbox.respawn.set").executes(this);
     }
 
     @Override
-    public void run(CommandSender sender, Object[] args) {
-        Location location = (Location) args[0];
-        location.setYaw((float) args[1]);
-        location.setPitch((float) args[2]);
+    public void run(CommandSender sender, CommandArguments args) {
+        Location location = (Location) args.get(0);
+        location.setYaw((float) args.get(1));
+        location.setPitch((float) args.get(2));
 
         manager.config().pvpBoxRespawn(location);
         manager.message(sender, "The respawn location has been updated");

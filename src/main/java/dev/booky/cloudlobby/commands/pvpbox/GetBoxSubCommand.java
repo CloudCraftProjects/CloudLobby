@@ -5,6 +5,7 @@ import dev.booky.cloudlobby.utils.CloudLobbyManager;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.LiteralArgument;
 import dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException;
+import dev.jorel.commandapi.executors.CommandArguments;
 import dev.jorel.commandapi.executors.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.util.BoundingBox;
@@ -22,7 +23,7 @@ public class GetBoxSubCommand extends CommandAPICommand implements CommandExecut
     }
 
     @Override
-    public void run(CommandSender sender, Object[] args) throws WrapperCommandSyntaxException {
+    public void run(CommandSender sender, CommandArguments args) throws WrapperCommandSyntaxException {
         BoundingBox box = manager.config().pvpBoxBox();
 
         if (box.getMin().equals(box.getMax())) {
@@ -30,7 +31,7 @@ public class GetBoxSubCommand extends CommandAPICommand implements CommandExecut
         }
 
         manager.message(sender, String.format("The current pvp box reaches from %s %s %s to %s %s %s",
-            box.getMinX(), box.getMinY(), box.getMinZ(),
-            box.getMaxX(), box.getMaxY(), box.getMaxZ()));
+                box.getMinX(), box.getMinY(), box.getMinZ(),
+                box.getMaxX(), box.getMaxY(), box.getMaxZ()));
     }
 }

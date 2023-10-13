@@ -5,6 +5,7 @@ import dev.booky.cloudlobby.utils.CloudLobbyManager;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.LiteralArgument;
 import dev.jorel.commandapi.arguments.LongArgument;
+import dev.jorel.commandapi.executors.CommandArguments;
 import dev.jorel.commandapi.executors.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
@@ -24,9 +25,9 @@ public class SetPvpBoxExitDelaySubCommand extends CommandAPICommand implements C
     }
 
     @Override
-    public void run(CommandSender sender, Object[] args) {
-        long milliseconds = (long) args[0];
-        manager.config().pvpBoxExitDelay((long) args[0]);
+    public void run(CommandSender sender, CommandArguments args) {
+        long milliseconds = (long) args.get(0);
+        manager.config().pvpBoxExitDelay(milliseconds);
 
         if (milliseconds == 0) {
             manager.message(sender, "The pvp box exit delay has been disabled");

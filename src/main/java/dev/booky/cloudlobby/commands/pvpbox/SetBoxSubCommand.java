@@ -6,6 +6,7 @@ import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.LiteralArgument;
 import dev.jorel.commandapi.arguments.LocationArgument;
 import dev.jorel.commandapi.arguments.LocationType;
+import dev.jorel.commandapi.executors.CommandArguments;
 import dev.jorel.commandapi.executors.CommandExecutor;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
@@ -29,9 +30,9 @@ public class SetBoxSubCommand extends CommandAPICommand implements CommandExecut
     }
 
     @Override
-    public void run(CommandSender sender, Object[] args) {
-        Vector position1 = ((Location) args[0]).toVector();
-        Vector position2 = ((Location) args[1]).toVector();
+    public void run(CommandSender sender, CommandArguments args) {
+        Vector position1 = ((Location) args.get(0)).toVector();
+        Vector position2 = ((Location) args.get(1)).toVector();
 
         if (position1.equals(position2)) {
             manager.config().pvpBoxBox(new BoundingBox());

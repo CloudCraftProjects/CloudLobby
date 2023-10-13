@@ -5,6 +5,7 @@ import dev.booky.cloudlobby.utils.CloudLobbyManager;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.LiteralArgument;
 import dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException;
+import dev.jorel.commandapi.executors.CommandArguments;
 import dev.jorel.commandapi.executors.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
@@ -21,7 +22,7 @@ public class GetPvpBoxExitDelaySubCommand extends CommandAPICommand implements C
     }
 
     @Override
-    public void run(CommandSender sender, Object[] args) throws WrapperCommandSyntaxException {
+    public void run(CommandSender sender, CommandArguments args) throws WrapperCommandSyntaxException {
         long milliseconds = manager.config().pvpBoxExitDelay(), ticks = milliseconds / 50, seconds = milliseconds / 1000;
 
         if (milliseconds == 0) {

@@ -1,38 +1,43 @@
 plugins {
     id("java-library")
     id("maven-publish")
+
+    alias(libs.plugins.pluginyml.bukkit)
+    alias(libs.plugins.run.paper)
+    alias(libs.plugins.shadow)
 }
 
 group = "dev.booky"
-version = "1.7.0"
+version = "1.7.1"
+
+val plugin: Configuration by configurations.creating {
+    isTransitive = false
+}
 
 repositories {
+    maven("https://maven.pkg.github.com/CloudCraftProjects/*/") {
+        name = "github"
+        credentials(PasswordCredentials::class.java)
+    }
     maven("https://papermc.io/repo/repository/maven-public/")
-    maven("https://repo.codemc.org/repository/maven-public/")
-    maven("https://libraries.minecraft.net/")
-    maven("https://jitpack.io/")
 }
 
 dependencies {
-    api("io.papermc.paper:paper-api:1.17.1-R0.1-SNAPSHOT")
-    api("dev.jorel.commandapi:commandapi-core:8.1.0")
-    api("com.mojang:brigadier:1.0.18")
-}
+    compileOnly(libs.paper.api)
 
-tasks {
-    processResources {
-        filesMatching("plugin.yml") {
-            expand("version" to project.version)
-        }
-    }
+    implementation(libs.bstats.bukkit)
+
+    compileOnlyApi(libs.cloudcore)
+
+    // testserver dependency plugins (maven)
+    plugin(variantOf(libs.cloudcore) { classifier("all") })
 }
 
 java {
     withSourcesJar()
-    withJavadocJar()
-
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(17))
+        vendor.set(JvmVendorSpec.ADOPTIUM)
     }
 }
 
@@ -40,5 +45,36 @@ publishing {
     publications.create<MavenPublication>("maven") {
         artifactId = project.name.lowercase()
         from(components["java"])
+    }
+}
+
+bukkit {
+    main = "$group.cloudlobby.CloudLobbyMain"
+    apiVersion = "1.20"
+    authors = listOf("booky10")
+    depend = listOf("CommandAPI", "CloudCore")
+}
+
+tasks {
+    runServer {
+        minecraftVersion("1.20.2")
+
+        pluginJars.from(plugin.resolve())
+        downloadPlugins {
+            hangar("CommandAPI", libs.versions.commandapi.get())
+            github(
+                "PaperMC", "Debuggery",
+                "v${libs.versions.debuggery.get()}",
+                "debuggery-bukkit-${libs.versions.debuggery.get()}.jar"
+            )
+        }
+    }
+
+    shadowJar {
+        relocate("org.bstats", "${project.group}.craftattack.bstats")
+    }
+
+    assemble {
+        dependsOn(shadowJar)
     }
 }
