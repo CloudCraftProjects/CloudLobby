@@ -29,7 +29,7 @@ dependencies {
 
     // downloaded at runtime using library loader
     sequenceOf(
-        libs.caffeine
+        libs.caffeine,
     ).forEach {
         compileOnlyApi(it)
         library(it)
@@ -79,7 +79,7 @@ tasks {
     }
 
     shadowJar {
-        relocate("org.bstats", "${project.group}.craftattack.bstats")
+        relocate("org.bstats", "${project.group}.cloudlobby.bstats")
     }
 
     assemble {
