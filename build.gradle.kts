@@ -15,11 +15,7 @@ val plugin: Configuration by configurations.creating {
 }
 
 repositories {
-    maven("https://maven.pkg.github.com/CloudCraftProjects/*/") {
-        name = "github"
-        credentials(PasswordCredentials::class.java)
-    }
-    maven("https://papermc.io/repo/repository/maven-public/")
+    maven("https://repo.cloudcraftmc.de/public/")
 }
 
 dependencies {
@@ -53,6 +49,10 @@ publishing {
     publications.create<MavenPublication>("maven") {
         artifactId = project.name.lowercase()
         from(components["java"])
+    }
+    repositories.maven("https://repo.cloudcraftmc.de/releases") {
+        name = "horreo"
+        credentials(PasswordCredentials::class.java)
     }
 }
 
