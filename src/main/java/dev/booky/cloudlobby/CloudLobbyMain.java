@@ -1,7 +1,7 @@
 package dev.booky.cloudlobby;
 // Created by booky10 in Lobby (14:23 12.09.21)
 
-import dev.booky.cloudcore.util.TranslationLoader;
+import dev.booky.cloudcore.i18n.CloudTranslator;
 import dev.booky.cloudlobby.commands.LobbyCommand;
 import dev.booky.cloudlobby.listeners.DoubleJumpListener;
 import dev.booky.cloudlobby.listeners.JoinQuitMessageListener;
@@ -9,18 +9,23 @@ import dev.booky.cloudlobby.listeners.MiscListener;
 import dev.booky.cloudlobby.listeners.MoveListener;
 import dev.booky.cloudlobby.listeners.PvPListener;
 import org.bukkit.Bukkit;
+import org.bukkit.NamespacedKey;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.Locale;
+
 public final class CloudLobbyMain extends JavaPlugin {
 
-    private TranslationLoader i18nLoader;
+    private CloudTranslator i18nLoader;
     private CloudLobbyManager manager;
     private LobbyCommand command;
 
     @Override
     public void onLoad() {
-        this.i18nLoader = new TranslationLoader(this);
+        this.i18nLoader = new CloudTranslator(this.getClassLoader(),
+                new NamespacedKey(this, "i18n"),
+                Locale.ENGLISH, Locale.GERMAN);
         this.i18nLoader.load();
 
         this.manager = new CloudLobbyManager(this, this.getDataFolder().toPath());

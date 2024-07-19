@@ -1,7 +1,7 @@
 package dev.booky.cloudlobby;
 // Created by booky10 in Lobby (14:00 12.09.21)
 
-import dev.booky.cloudcore.config.ConfigLoader;
+import dev.booky.cloudcore.config.ConfigurateLoader;
 import dev.booky.cloudcore.util.BlockBBox;
 import dev.jorel.commandapi.CommandAPIBukkit;
 import dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException;
@@ -33,6 +33,8 @@ public final class CloudLobbyManager {
             .append(text(']', GRAY))
             .appendSpace()
             .build();
+    private static final ConfigurateLoader<?, ?> CONFIG_LOADER = ConfigurateLoader.yamlLoader()
+            .withAllDefaultSerializers().build();
 
     private final Map<UUID, Long> lastDamage = new HashMap<>();
 
@@ -47,7 +49,7 @@ public final class CloudLobbyManager {
     }
 
     public void reloadConfig() {
-        this.config = ConfigLoader.loadObject(this.configPath, CloudLobbyConfig.class);
+        this.config = CONFIG_LOADER.loadObject(this.configPath, CloudLobbyConfig.class);
     }
 
     public WrapperCommandSyntaxException fail(String message) {
