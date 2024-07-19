@@ -22,6 +22,7 @@ shadow = { id = "io.github.goooler.shadow", version.ref = "shadow" }
 paper-api = { module = "io.papermc.paper:paper-api", version.ref = "paper" }
 bstats-bukkit = { module = "org.bstats:bstats-bukkit", version.ref = "bstats" }
 
-cloudcore = { module = "dev.booky:cloudcore", version.ref = "cloudcore" }
-
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
+cloudcore = { module = "dev.booky:cloudcore", version.ref = "cloudcore" }
+commandapi-bukkit-core = { module = "dev.jorel:commandapi-bukkit-core", version.ref = "commandapi" }
+commandapi-bukkit-plugin = { module = "dev.jorel:commandapi-bukkit-plugin", version.ref = "commandapi" }

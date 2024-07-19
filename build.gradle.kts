@@ -21,8 +21,6 @@ repositories {
 dependencies {
     compileOnly(libs.paper.api)
 
-    implementation(libs.bstats.bukkit)
-
     // downloaded at runtime using library loader
     sequenceOf(
         libs.caffeine,
@@ -32,15 +30,18 @@ dependencies {
     }
 
     compileOnlyApi(libs.cloudcore)
+    compileOnlyApi(libs.commandapi.bukkit.core)
+    implementation(libs.bstats.bukkit)
 
     // testserver dependency plugins (maven)
     plugin(variantOf(libs.cloudcore) { classifier("all") })
+    plugin(libs.commandapi.bukkit.plugin)
 }
 
 java {
     withSourcesJar()
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(21)
         vendor = JvmVendorSpec.ADOPTIUM
     }
 }
@@ -69,7 +70,6 @@ tasks {
 
         pluginJars.from(plugin.resolve())
         downloadPlugins {
-            hangar("CommandAPI", libs.versions.commandapi.get())
             github(
                 "PaperMC", "Debuggery",
                 "v${libs.versions.debuggery.get()}",
