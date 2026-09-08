@@ -104,6 +104,6 @@ public final class DoubleJumpListener implements Listener {
                 }
                 this.cancel();
             }
-        }.runTaskTimer(this.manager.getPlugin(), MIN_COOLDOWN, 2);
+        }.runTaskTimer(this.manager.getPlugin(), MIN_COOLDOWN, 1);
     }
 }
