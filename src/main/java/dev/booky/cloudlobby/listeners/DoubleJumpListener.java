@@ -52,8 +52,12 @@ public final class DoubleJumpListener implements Listener {
 
         if (event.getNewGameMode() == GameMode.ADVENTURE) {
             // delay by one tick, no post event is present here
-            Bukkit.getScheduler().runTask(this.manager.getPlugin(),
-                    () -> event.getPlayer().setAllowFlight(true));
+            Player player = event.getPlayer();
+            Bukkit.getRegionScheduler().run(this.manager.getPlugin(), player.getLocation(), task -> {
+                if (player.isConnected()) {
+                    player.setAllowFlight(true);
+                }
+            });
         }
     }
 

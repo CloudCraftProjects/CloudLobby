@@ -3,8 +3,11 @@ package dev.booky.cloudlobby.listeners;
 
 import dev.booky.cloudlobby.CloudLobbyManager;
 import io.papermc.paper.event.player.PrePlayerAttackEntityEvent;
+import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.SoundCategory;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -12,7 +15,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.player.PlayerRespawnEvent;
+
+import java.util.Objects;
 
 import static net.kyori.adventure.text.Component.translatable;
 
@@ -72,14 +76,35 @@ public final class PvPListener implements Listener {
     @EventHandler
     public void onDeath(PlayerDeathEvent event) {
         this.manager.removeExitCooldown(event.getPlayer().getUniqueId());
-        event.getEntity().sendActionBar(translatable("cl.pvp-box.died"));
-    }
+        Player entity = event.getEntity();
+        entity.sendActionBar(translatable("cl.pvp-box.died"));
 
-    @EventHandler
-    public void onRespawn(PlayerRespawnEvent event) {
+        // fake death, to prevent respawning logic from running (expensive)
+        event.setCancelled(true);
+        Component deathMessage = event.deathMessage();
+        if (deathMessage != null) {
+            Bukkit.broadcast(deathMessage);
+        }
+        if (event.getDeathSound() != null) {
+            SoundCategory category = Objects.requireNonNullElse(event.getDeathSoundCategory(), SoundCategory.MASTER);
+            entity.getWorld().playSound(
+                    entity.getLocation(), event.getDeathSound(),
+                    category, event.getDeathSoundVolume(), event.getDeathSoundPitch()
+            );
+        }
+
+        event.setKeepInventory(true);
+        event.setKeepLevel(true);
+
         Location respawnLoc = this.manager.getConfig().getPvpBox().getRespawnLocation();
         if (respawnLoc != null) {
-            event.setRespawnLocation(respawnLoc);
+            // again, delay by a tick because of bukkit
+            Bukkit.getRegionScheduler().run(this.manager.getPlugin(), entity.getLocation(), task -> {
+                if (entity.isConnected()) {
+                    entity.teleportAsync(respawnLoc)
+                            .thenRun(() -> this.manager.removeExitCooldown(event.getPlayer().getUniqueId()));
+                }
+            });
         }
     }
 }
