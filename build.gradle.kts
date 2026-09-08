@@ -66,7 +66,7 @@ bukkit {
 
 tasks {
     runServer {
-        minecraftVersion("1.20.4")
+        minecraftVersion("1.21.4")
 
         pluginJars.from(plugin.resolve())
         downloadPlugins {
