@@ -89,7 +89,7 @@ public final class CloudLobbyManager {
 
     public boolean isPvpBox(Location loc) {
         BlockBBox box = this.config.getPvpBox().getBox();
-        return box.contains(loc.getWorld(), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
+        return box != null && box.contains(loc.getWorld(), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
     }
 
     public long getRemainingExitCooldown(UUID playerId) {
