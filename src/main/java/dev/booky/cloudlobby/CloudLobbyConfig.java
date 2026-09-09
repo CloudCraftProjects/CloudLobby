@@ -4,12 +4,14 @@ package dev.booky.cloudlobby;
 import dev.booky.cloudcore.util.BlockBBox;
 import io.papermc.paper.math.BlockPosition;
 import org.bukkit.Location;
+import org.jspecify.annotations.NullUnmarked;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+@NullUnmarked
 @ConfigSerializable
 public final class CloudLobbyConfig {
 

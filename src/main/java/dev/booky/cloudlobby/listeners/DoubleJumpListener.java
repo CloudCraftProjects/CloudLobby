@@ -18,7 +18,9 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerToggleFlightEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
+import org.jspecify.annotations.NullMarked;
 
+@NullMarked
 public final class DoubleJumpListener implements Listener {
 
     private static final int MIN_COOLDOWN = Ticks.TICKS_PER_SECOND / 2;

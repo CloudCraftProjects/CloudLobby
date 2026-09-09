@@ -13,7 +13,9 @@ import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.jspecify.annotations.NullMarked;
 
+@NullMarked
 public final class MiscListener implements Listener {
 
     @EventHandler

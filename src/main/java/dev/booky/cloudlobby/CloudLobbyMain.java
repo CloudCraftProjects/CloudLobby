@@ -14,15 +14,18 @@ import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.Locale;
 
+@NullMarked
 public final class CloudLobbyMain extends JavaPlugin {
 
-    private CloudTranslator i18nLoader;
-    private CloudLobbyManager manager;
-    private LobbyCommand command;
-    private JumpCommand jumpCommand;
+    private @MonotonicNonNull CloudTranslator i18nLoader;
+    private @MonotonicNonNull CloudLobbyManager manager;
+    private @MonotonicNonNull LobbyCommand command;
+    private @MonotonicNonNull JumpCommand jumpCommand;
 
     @Override
     public void onLoad() {

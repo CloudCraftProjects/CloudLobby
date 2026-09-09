@@ -10,6 +10,8 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.plugin.Plugin;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -26,6 +28,7 @@ import static net.kyori.adventure.text.format.NamedTextColor.RED;
 import static net.kyori.adventure.text.format.NamedTextColor.WHITE;
 import static net.kyori.adventure.text.format.TextDecoration.BOLD;
 
+@NullMarked
 public final class CloudLobbyManager {
 
     private static final Component PREFIX = text()
@@ -41,7 +44,7 @@ public final class CloudLobbyManager {
     private final Map<UUID, Long> lastDamage = new HashMap<>();
 
     private final Path configPath;
-    private CloudLobbyConfig config;
+    private @MonotonicNonNull CloudLobbyConfig config;
     private final List<Runnable> configReloadHooks = new ArrayList<>();
 
     private final Plugin plugin;

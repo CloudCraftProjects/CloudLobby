@@ -15,11 +15,13 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.Objects;
 
 import static net.kyori.adventure.text.Component.translatable;
 
+@NullMarked
 public final class PvPListener implements Listener {
 
     private final CloudLobbyManager manager;

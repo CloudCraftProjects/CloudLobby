@@ -8,11 +8,13 @@ import dev.jorel.commandapi.CommandTree;
 import dev.jorel.commandapi.arguments.LiteralArgument;
 import dev.jorel.commandapi.executors.CommandArguments;
 import dev.jorel.commandapi.wrappers.NativeProxyCommandSender;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.Set;
 
 import static net.kyori.adventure.text.Component.translatable;
 
+@NullMarked
 public final class LobbyCommand {
 
     private static final String MAIN_LABEL = "cloudlobby";
