@@ -12,7 +12,9 @@ import org.bukkit.entity.Entity;
 import org.bukkit.plugin.Plugin;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -40,6 +42,7 @@ public final class CloudLobbyManager {
 
     private final Path configPath;
     private CloudLobbyConfig config;
+    private final List<Runnable> configReloadHooks = new ArrayList<>();
 
     private final Plugin plugin;
 
@@ -48,8 +51,16 @@ public final class CloudLobbyManager {
         this.configPath = dataDir.resolve("config.yml");
     }
 
+    public void addConfigReloadHook(Runnable runnable) {
+        this.configReloadHooks.add(runnable);
+        runnable.run();
+    }
+
     public void reloadConfig() {
         this.config = CONFIG_LOADER.loadObject(this.configPath, CloudLobbyConfig.class);
+        for (Runnable runnable : this.configReloadHooks) {
+            runnable.run();
+        }
     }
 
     public WrapperCommandSyntaxException fail(String message) {

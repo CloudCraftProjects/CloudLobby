@@ -2,7 +2,9 @@ package dev.booky.cloudlobby;
 // Created by booky10 in Lobby (14:23 12.09.21)
 
 import dev.booky.cloudcore.i18n.CloudTranslator;
+import dev.booky.cloudlobby.commands.JumpCommand;
 import dev.booky.cloudlobby.commands.LobbyCommand;
+import dev.booky.cloudlobby.jump.JumpManager;
 import dev.booky.cloudlobby.listeners.DoubleJumpListener;
 import dev.booky.cloudlobby.listeners.JoinQuitMessageListener;
 import dev.booky.cloudlobby.listeners.MiscListener;
@@ -20,6 +22,7 @@ public final class CloudLobbyMain extends JavaPlugin {
     private CloudTranslator i18nLoader;
     private CloudLobbyManager manager;
     private LobbyCommand command;
+    private JumpCommand jumpCommand;
 
     @Override
     public void onLoad() {
@@ -40,6 +43,10 @@ public final class CloudLobbyMain extends JavaPlugin {
         this.command = new LobbyCommand(this.manager);
         this.command.register();
 
+        JumpManager jumpManager = new JumpManager(this.manager);
+        this.jumpCommand = new JumpCommand(jumpManager);
+        this.jumpCommand.register();
+
         Bukkit.getPluginManager().registerEvents(new DoubleJumpListener(this.manager), this);
         Bukkit.getPluginManager().registerEvents(new JoinQuitMessageListener(), this);
         Bukkit.getPluginManager().registerEvents(new MiscListener(), this);
@@ -51,6 +58,9 @@ public final class CloudLobbyMain extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (this.jumpCommand != null) {
+            this.jumpCommand.unregister();
+        }
         if (this.command != null) {
             this.command.unregister();
         }
