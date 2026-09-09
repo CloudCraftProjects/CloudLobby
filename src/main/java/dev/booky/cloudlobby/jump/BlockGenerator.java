@@ -35,7 +35,7 @@ public final class BlockGenerator {
         byte offset = layer.getRandom(random, angleMin, angleMax);
         return Position.block(
                 center.blockX() + Layer.relX(offset),
-                center.blockY(),
+                center.blockY() + layer.getOffset(),
                 center.blockZ() + Layer.relZ(offset)
         );
     }
