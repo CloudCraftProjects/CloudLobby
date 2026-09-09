@@ -190,10 +190,12 @@ public final class BlockGenerator {
             if (angleRange >= TAU) { // full circle requested, fast path: all blocks
                 return this.blocks[random.nextInt(this.blocks.length)];
             }
-            int low = this.lowerBound(normalize(angleMin));
+            angleMin = normalize(angleMin);
+            angleMax = normalize(angleMax);
+            int low = this.lowerBound(angleMin);
             int high = angleMin < angleMax
-                    ? this.lowerBound(normalize(angleMax))
-                    : this.lowerBound(normalize(angleMax)) + this.blocks.length;
+                    ? this.lowerBound(angleMax)
+                    : this.lowerBound(angleMax) + this.blocks.length;
             if (low >= high) { // at least one
                 high = low + 1;
             }
@@ -201,10 +203,7 @@ public final class BlockGenerator {
             // get random contained within range
             int len = high - low;
             int i = random.nextInt(len);
-            if (i >= this.blocks.length - low) { // wrapped past the array end
-                i -= this.blocks.length - low;
-            }
-            return this.blocks[low + i];
+            return this.blocks[(low + i) % this.blocks.length];
         }
     }
 }
