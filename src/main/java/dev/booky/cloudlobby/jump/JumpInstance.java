@@ -16,6 +16,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Slime;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.util.NumberConversions;
 import org.joml.Math;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -43,6 +44,8 @@ public class JumpInstance {
 
     private final int highscore;
     private int score = 0;
+
+    private double previousJumpDistance = -1;
 
     private @Nullable ScheduledTask actionbarTask;
     private WeakReference<@Nullable Entity> glowingEntity = new WeakReference<>(null);
@@ -81,6 +84,7 @@ public class JumpInstance {
         float viewRange = Math.toRadians(this.manager.getManager().getConfig().getJump().getViewRange());
         this.placeBlock(this.manager.getBlockGenerator().getRandomBlock(
                 this.blocks.getLast(), random,
+                this.previousJumpDistance,
                 angle - viewRange,
                 angle + viewRange,
                 this::isValidBlock
@@ -104,6 +108,13 @@ public class JumpInstance {
     }
 
     private void placeBlock(BlockPosition pos) {
+        if (!this.blocks.isEmpty()) {
+            BlockPosition prev = this.blocks.getLast();
+            double horizontal = Math.sqrt(NumberConversions.square(prev.blockX() - pos.blockX())
+                    + NumberConversions.square(prev.blockZ() - pos.blockZ()));
+            this.previousJumpDistance = Math.max(
+                    horizontal + (pos.blockY() - prev.blockY()) * BlockGenerator.GRAVITY_FACTOR, 0.1);
+        }
         Block block = this.world.getBlockAt(pos.blockX(), pos.blockY(), pos.blockZ());
         block.setType(this.blocks.isEmpty() ? this.material.concrete() : this.material.glass(), false);
         block.getRelative(0, 1, 0).setType(Material.LIGHT, false);

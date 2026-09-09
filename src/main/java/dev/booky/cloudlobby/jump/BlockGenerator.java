@@ -17,6 +17,7 @@ import java.util.function.Predicate;
 public final class BlockGenerator {
 
     public static final int MAX_TRIES = 250;
+    public static final double GRAVITY_FACTOR = 0.8d;
 
     private Layer[] layers = new Layer[0];
 
@@ -26,13 +27,13 @@ public final class BlockGenerator {
                 .toArray(Layer[]::new);
     }
 
-    public BlockPosition getRandomBlock(Position center, Random random) {
-        return this.getRandomBlock(center, random, -Layer.TAU, Layer.TAU);
+    public BlockPosition getRandomBlock(Position center, Random random, double previousDistance) {
+        return this.getRandomBlock(center, random, previousDistance, -Layer.TAU, Layer.TAU);
     }
 
-    public BlockPosition getRandomBlock(Position center, Random random, float angleMin, float angleMax) {
+    public BlockPosition getRandomBlock(Position center, Random random, double previousDistance, float angleMin, float angleMax) {
         Layer layer = this.layers[random.nextInt(this.layers.length)];
-        byte offset = layer.getRandom(random, angleMin, angleMax);
+        byte offset = layer.getRandom(random, previousDistance, angleMin, angleMax);
         return Position.block(
                 center.blockX() + Layer.relX(offset),
                 center.blockY() + layer.getOffset(),
@@ -40,17 +41,17 @@ public final class BlockGenerator {
         );
     }
 
-    public BlockPosition getRandomBlock(Position center, Random random, Predicate<BlockPosition> predicate) {
-        return this.getRandomBlock(center, random, -Layer.TAU, Layer.TAU, predicate);
+    public BlockPosition getRandomBlock(Position center, Random random, double previousDistance, Predicate<BlockPosition> predicate) {
+        return this.getRandomBlock(center, random, previousDistance, -Layer.TAU, Layer.TAU, predicate);
     }
 
     public BlockPosition getRandomBlock(
-            Position center, Random random,
+            Position center, Random random, double previousDistance,
             float angleMin, float angleMax,
             Predicate<BlockPosition> predicate
     ) {
         for (int i = 0; i < MAX_TRIES; i++) {
-            BlockPosition pos = this.getRandomBlock(center, random, angleMin, angleMax);
+            BlockPosition pos = this.getRandomBlock(center, random, previousDistance, angleMin, angleMax);
             if (predicate.test(pos)) {
                 return pos;
             }
@@ -58,7 +59,7 @@ public final class BlockGenerator {
         // check again without angle restriction
         int i = 0;
         while (true) {
-            BlockPosition pos = this.getRandomBlock(center, random);
+            BlockPosition pos = this.getRandomBlock(center, random, previousDistance);
             if (i++ == MAX_TRIES || predicate.test(pos)) {
                 return pos;
             }
@@ -79,6 +80,7 @@ public final class BlockGenerator {
         private final int offset;
         private final byte[] blocks;
         private final float[] angles;
+        private final double[] distances;
 
         private Layer(int offset, byte[] blocks) {
             this.offset = offset;
@@ -95,12 +97,19 @@ public final class BlockGenerator {
             Arrays.sort(idx, Comparator.comparingDouble(i -> angles[i]));
             byte[] sorted = new byte[blocks.length];
             float[] sortedAngles = new float[blocks.length];
+            double[] sortedDistances = new double[blocks.length];
             for (int i = 0; i < idx.length; i++) {
-                sorted[i] = blocks[idx[i]];
+                byte block = blocks[idx[i]];
+                sorted[i] = block;
                 sortedAngles[i] = angles[idx[i]];
+                int rx = relX(block);
+                int rz = relZ(block);
+                double horizontal = Math.sqrt((double) rx * rx + (double) rz * rz);
+                sortedDistances[i] = Math.max(horizontal + offset * BlockGenerator.GRAVITY_FACTOR, 0.1);
             }
             this.blocks = sorted;
             this.angles = sortedAngles;
+            this.distances = sortedDistances;
         }
 
         private static float normalize(float angle) {
@@ -185,10 +194,10 @@ public final class BlockGenerator {
             return lo;
         }
 
-        public byte getRandom(Random random, float angleMin, float angleMax) {
+        public byte getRandom(Random random, double previousDistance, float angleMin, float angleMax) {
             float angleRange = angleMax - angleMin;
             if (angleRange >= TAU) { // full circle requested, fast path: all blocks
-                return this.blocks[random.nextInt(this.blocks.length)];
+                return this.getWeightedRandom(random, previousDistance, 0, this.blocks.length);
             }
             angleMin = normalize(angleMin);
             angleMax = normalize(angleMax);
@@ -199,11 +208,40 @@ public final class BlockGenerator {
             if (low >= high) { // at least one
                 high = low + 1;
             }
+            return this.getWeightedRandom(random, previousDistance, low, high);
+        }
 
-            // get random contained within range
+        private byte getWeightedRandom(Random random, double previousDistance, int low, int high) {
             int len = high - low;
-            int i = random.nextInt(len);
-            return this.blocks[(low + i) % this.blocks.length];
+            if (len <= 1) {
+                return this.blocks[low % this.blocks.length];
+            }
+            if (previousDistance < 0d) {
+                // uniform random
+                int i = random.nextInt(len);
+                return this.blocks[(low + i) % this.blocks.length];
+            }
+
+            // weight each candidate by how different its distance is from the
+            // previous jump to make short jumps not repeat
+            double total = 0d;
+            double[] weights = new double[len];
+            for (int i = 0; i < len; i++) {
+                double dist = this.distances[(low + i) % this.blocks.length];
+                weights[i] = 1d + Math.abs(dist - previousDistance);
+                total += weights[i];
+            }
+
+            // weighted random selection
+            double r = random.nextDouble() * total;
+            double sum = 0d;
+            for (int i = 0; i < len; i++) {
+                sum += weights[i];
+                if (r < sum) {
+                    return this.blocks[(low + i) % this.blocks.length];
+                }
+            }
+            return this.blocks[(low + len - 1) % this.blocks.length]; // fallback
         }
     }
 }

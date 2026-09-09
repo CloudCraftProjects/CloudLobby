@@ -55,9 +55,9 @@ public class JumpManager {
             }
             // compare each block against target position
             for (BlockPosition block : inst.getBlocks()) {
-                double distSq = NumberConversions.square((block.blockX() + 0.5d) - (position.blockX() + 0.5d))
-                        + NumberConversions.square((block.blockY() + 0.5d) - (position.blockY() + 0.5d))
-                        + NumberConversions.square((block.blockZ() + 0.5d) - (position.blockZ() + 0.5d));
+                double distSq = NumberConversions.square(block.blockX() - position.blockX())
+                        + NumberConversions.square(block.blockY() - position.blockY())
+                        + NumberConversions.square(block.blockZ() - position.blockZ());
                 if (distSq <= distThresholSq) {
                     instances.add(inst);
                 }
