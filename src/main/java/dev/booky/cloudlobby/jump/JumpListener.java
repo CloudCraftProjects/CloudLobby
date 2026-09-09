@@ -77,13 +77,13 @@ public class JumpListener implements Listener {
         }
 
         // check if player fell off
-        double minY = to.getY();
+        double minY = Double.MAX_VALUE;
         for (BlockPosition block : blocks) {
             if (block.y() < minY) {
                 minY = block.y();
             }
         }
-        if (to.getY() + 1e-6d < minY) {
+        if (to.getY() + 1e-6d < minY + 0.4d) {
             this.manager.stopJumping(player); // player fell
             return;
         }
