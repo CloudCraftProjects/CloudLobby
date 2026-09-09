@@ -58,7 +58,7 @@ public final class BlockGenerator {
         // check again without angle restriction
         int i = 0;
         while (true) {
-            BlockPosition pos = this.getRandomBlock(center, random, angleMin, angleMax);
+            BlockPosition pos = this.getRandomBlock(center, random);
             if (i++ == MAX_TRIES || predicate.test(pos)) {
                 return pos;
             }
