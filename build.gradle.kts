@@ -8,9 +8,9 @@ plugins {
 }
 
 group = "dev.booky"
-version = "2.0.1"
+version = "2.1.0-SNAPSHOT"
 
-val plugin: Configuration by configurations.creating {
+val plugin = configurations.create("plugin") {
     isTransitive = false
 }
 
