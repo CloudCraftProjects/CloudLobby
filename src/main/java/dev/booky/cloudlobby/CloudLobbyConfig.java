@@ -66,6 +66,7 @@ public final class CloudLobbyConfig {
         private float viewRange = 45f;
         private double maxDistance = 8d;
 
+        @ConfigSerializable
         public record BlockPattern(int offset, String pattern) {
         }
 
