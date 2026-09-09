@@ -54,7 +54,7 @@ public class JumpListener implements Listener {
         }
         Player player = event.getPlayer();
         JumpInstance instance = this.manager.getInstance(player);
-        if (instance == null) {
+        if (instance == null || !instance.hasStarted()) {
             return;
         }
         List<BlockPosition> blocks = instance.getBlocks();
@@ -116,6 +116,9 @@ public class JumpListener implements Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onTeleport(PlayerTeleportEvent event) {
-        this.manager.stopJumping(event.getPlayer());
+        JumpInstance instance = this.manager.getInstance(event.getPlayer());
+        if (instance != null && instance.hasStarted()) {
+            this.manager.stopJumping(event.getPlayer());
+        }
     }
 }

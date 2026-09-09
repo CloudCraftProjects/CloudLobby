@@ -38,11 +38,16 @@ public class JumpInstance {
 
     private final List<BlockPosition> blocks = new LinkedList<>();
 
+    private boolean started = false;
+    private boolean stopped = false;
+
     private final int highscore;
     private int score = 0;
 
     private @Nullable ScheduledTask actionbarTask;
     private WeakReference<@Nullable Entity> glowingEntity = new WeakReference<>(null);
+
+    private boolean wasAllowFlight;
 
     public JumpInstance(JumpManager manager, Player player) {
         this.manager = manager;
@@ -72,12 +77,12 @@ public class JumpInstance {
 
         // generate next block based on player view angle + valid-ness
         ThreadLocalRandom random = ThreadLocalRandom.current();
-        float angle = this.player.getYaw();
-        float viewRange = this.manager.getManager().getConfig().getJump().getViewRange();
+        float angle = (float) (Math.toRadians(this.player.getYaw()) + Math.PI / 2d);
+        float viewRange = Math.toRadians(this.manager.getManager().getConfig().getJump().getViewRange());
         this.placeBlock(this.manager.getBlockGenerator().getRandomBlock(
                 this.blocks.getLast(), random,
-                Math.toRadians(angle - viewRange),
-                Math.toRadians(angle + viewRange),
+                angle - viewRange,
+                angle + viewRange,
                 this::isValidBlock
         ));
     }
@@ -139,25 +144,44 @@ public class JumpInstance {
         this.player.playSound(this.player, Sound.BLOCK_NOTE_BLOCK_BASS, 1f, 2f);
     }
 
+    public boolean hasStarted() {
+        return this.started;
+    }
+
     void start() {
         this.updateGlowing();
 
         Location spawnPos = this.blocks.getFirst().toLocation(this.world);
-        spawnPos.add(0.5d, 0.5d + 0.125d, 0.5d);
+        spawnPos.add(0.5d, 1.025d, 0.5d);
         spawnPos.setYaw(this.player.getYaw());
         spawnPos.setPitch(this.player.getPitch());
 
-        this.player.teleportAsync(spawnPos, PlayerTeleportEvent.TeleportCause.PLUGIN,
-                TeleportFlag.Relative.VELOCITY_ROTATION);
-        this.player.playSound(this.player, Sound.ENTITY_PLAYER_LEVELUP, 1f, 1f);
+        if (this.player.getAllowFlight()) {
+            this.wasAllowFlight = true;
+            this.player.setAllowFlight(false);
+        }
 
-        this.updateActionbar();
-        this.actionbarTask = this.player.getScheduler().runAtFixedRate(this.manager.getManager().getPlugin(),
-                __ -> this.updateActionbar(), null,
-                Ticks.TICKS_PER_SECOND * 2, Ticks.TICKS_PER_SECOND * 2);
+        this.player.teleportAsync(spawnPos, PlayerTeleportEvent.TeleportCause.PLUGIN,
+                        TeleportFlag.Relative.VELOCITY_ROTATION)
+                .thenRun(() -> {
+                    if (!this.player.isConnected() || this.stopped) {
+                        return;
+                    }
+                    this.player.playSound(this.player, Sound.ENTITY_PLAYER_LEVELUP, 1f, 1f);
+
+                    this.updateActionbar();
+                    this.actionbarTask = this.player.getScheduler().runAtFixedRate(this.manager.getManager().getPlugin(),
+                            __ -> this.updateActionbar(), null,
+                            Ticks.TICKS_PER_SECOND * 2, Ticks.TICKS_PER_SECOND * 2);
+
+                    this.started = true;
+                });
     }
 
     void stop() {
+        this.stopped = true;
+        boolean connected = this.player.isConnected();
+
         // destroy remaining blocks
         for (int i = 0, count = this.blocks.size(); i < count; i++) {
             this.destroyBlock(false);
@@ -167,25 +191,37 @@ public class JumpInstance {
         // send user feedback
         if (this.score > this.highscore) {
             this.manager.setHighscore(this.player, this.score);
-            this.player.playSound(this.player, Sound.ENTITY_FIREWORK_ROCKET_LARGE_BLAST, 1f, 1f);
-            this.player.sendMessage(Component.translatable("cl.jump.highscore",
-                    TranslationArgument.numeric(this.score)));
+            if (connected) {
+                this.player.playSound(this.player, Sound.ENTITY_FIREWORK_ROCKET_LARGE_BLAST, 1f, 1f);
+                this.player.sendMessage(Component.translatable("cl.jump.highscore",
+                        TranslationArgument.numeric(this.score)));
+            }
         } else {
-            this.player.playSound(this.player, Sound.BLOCK_ANVIL_DESTROY, 1f, 1f);
-            this.player.sendMessage(Component.translatable("cl.jump.no-highscore",
-                    TranslationArgument.numeric(this.score)));
+            if (connected) {
+                this.player.playSound(this.player, Sound.BLOCK_ANVIL_DESTROY, 1f, 1f);
+                this.player.sendMessage(Component.translatable("cl.jump.no-highscore",
+                        TranslationArgument.numeric(this.score)));
+            }
         }
 
-        // reset
-        this.player.sendActionBar(Component.empty());
         if (this.actionbarTask != null) {
             this.actionbarTask.cancel();
             this.actionbarTask = null;
         }
 
-        Location respawnLoc = this.manager.getManager().getConfig().getJump().getRespawnLocation();
-        if (respawnLoc != null) {
-            this.player.teleportAsync(respawnLoc);
+        // reset
+        if (connected) {
+            this.player.sendActionBar(Component.empty());
+
+            Location respawnLoc = this.manager.getManager().getConfig().getJump().getRespawnLocation();
+            if (respawnLoc != null) {
+                this.player.teleportAsync(respawnLoc);
+            }
+
+            if (this.wasAllowFlight) {
+                this.wasAllowFlight = false;
+                this.player.setAllowFlight(true);
+            }
         }
     }
 
