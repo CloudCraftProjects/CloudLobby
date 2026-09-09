@@ -239,7 +239,11 @@ public class JumpInstance {
     private void updateGlowing() {
         Entity existing = this.glowingEntity.get();
         if (existing != null) {
-            existing.remove();
+            try {
+                existing.remove();
+            } catch (Throwable ignored) {
+            }
+            this.glowingEntity = new WeakReference<>(null);
         }
         // we need at least the next block to show glowing effect
         if (this.blocks.size() < 2) {
