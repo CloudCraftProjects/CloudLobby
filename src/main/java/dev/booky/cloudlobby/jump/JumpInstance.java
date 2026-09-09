@@ -1,6 +1,7 @@
 package dev.booky.cloudlobby.jump;
 // Created by booky10 in CloudLobby (12:31 AM 09.09.2026)
 
+import dev.booky.cloudcore.util.BlockBBox;
 import io.papermc.paper.entity.TeleportFlag;
 import io.papermc.paper.math.BlockPosition;
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
@@ -30,6 +31,10 @@ import java.util.concurrent.ThreadLocalRandom;
 public class JumpInstance {
 
     private static final double NEARBY_THRESHOLD = 7d;
+    private static final double JUMP_DIR_WEIGHT = 0.6d;
+    private static final double WIDEN_THRESHOLD = 10d;
+    private static final double MAX_WIDEN = Math.PI / 2d;
+    private static final double EDGE_PENALTY_RANGE = 6d;
 
     private final JumpManager manager;
 
@@ -46,6 +51,7 @@ public class JumpInstance {
     private int score = 0;
 
     private double previousJumpDistance = -1;
+    private float lastJumpAngle = Float.NaN;
 
     private @Nullable ScheduledTask actionbarTask;
     private WeakReference<@Nullable Entity> glowingEntity = new WeakReference<>(null);
@@ -78,24 +84,74 @@ public class JumpInstance {
             }
         }
 
-        // generate next block based on player view angle + valid-ness
         ThreadLocalRandom random = ThreadLocalRandom.current();
-        float angle = (float) (Math.toRadians(this.player.getYaw()) + Math.PI / 2d);
-        float viewRange = Math.toRadians(this.manager.getManager().getConfig().getJump().getViewRange());
+        float playerAngle = (float) (Math.toRadians(this.player.getYaw()) + Math.PI / 2d);
+
+        // blend player yaw with last jump direction
+        float angle = Float.isNaN(this.lastJumpAngle) ? playerAngle :
+                (float) blendAngles(this.lastJumpAngle, playerAngle, JUMP_DIR_WEIGHT);
+
+        float viewRange = Math.toRadians(this.manager.getManager().getConfig().getJump().getViewRange())
+                + this.calculateAngleWiden(this.blocks.getLast(), angle);
         this.placeBlock(this.manager.getBlockGenerator().getRandomBlock(
                 this.blocks.getLast(), random,
                 this.previousJumpDistance,
                 angle - viewRange,
                 angle + viewRange,
-                this::isValidBlock
+                this::isValidBlockWithPenalty,
+                this::isValidBlockWithoutPenalty
         ));
     }
 
-    private boolean isValidBlock(BlockPosition position) {
-        if (!this.manager.isInBox(position)) {
-            return false;
+    private static double blendAngles(float a, float b, double weight) {
+        return a + wrapAngle(b - a) * (1d - weight);
+    }
+
+    private static double wrapAngle(double angle) {
+        // vanilla Mth#wrapDegrees, but radians
+        angle = angle % (2d * Math.PI);
+        if (angle >= Math.PI) {
+            angle -= 2d * Math.PI;
         }
-        // check if air is above
+        if (angle < -Math.PI) {
+            angle += 2d * Math.PI;
+        }
+        return angle;
+    }
+
+    private float calculateAngleWiden(BlockPosition pos, float angle) {
+        BlockBBox box = this.manager.getContainingBox(pos);
+        if (box == null) {
+            return 0f;
+        }
+
+        int x = pos.blockX();
+        int z = pos.blockZ();
+        double fx = Math.cos(angle);
+        double fz = Math.sin(angle);
+
+        // check how much space we have available until reaching thhe border of the box
+        double forwardDist = Double.MAX_VALUE;
+        if (fx > 1e-6d) {
+            forwardDist = Math.min(forwardDist, (box.getMaxX() - x) / fx);
+        } else if (fx < -1e-6d) {
+            forwardDist = Math.min(forwardDist, (x - box.getMinX()) / -fx);
+        }
+        if (fz > 1e-6d) {
+            forwardDist = Math.min(forwardDist, (box.getMaxZ() - z) / fz);
+        } else if (fz < -1e-6d) {
+            forwardDist = Math.min(forwardDist, (z - box.getMinZ()) / -fz);
+        }
+
+        // if close to border, widen angle to ensure players don't run straight into walls
+        if (forwardDist >= WIDEN_THRESHOLD) {
+            return 0f;
+        }
+        double proximity = Math.max(0d, 1d - forwardDist / WIDEN_THRESHOLD);
+        return (float) (proximity * MAX_WIDEN);
+    }
+
+    private boolean isValidBlock(BlockPosition position) {
         Block block = this.world.getBlockAt(position.blockX(), position.blockY(), position.blockZ());
         if (!block.isEmpty()
                 || !block.getRelative(0, 1, 0).isEmpty()
@@ -107,6 +163,30 @@ public class JumpInstance {
         return instances.isEmpty() || instances.size() == 1 && instances.getFirst() == this;
     }
 
+    private boolean isValidBlockWithoutPenalty(BlockPosition position) {
+        return this.manager.isInBox(position) && this.isValidBlock(position);
+    }
+
+    private boolean isValidBlockWithPenalty(BlockPosition position) {
+        BlockBBox box = this.manager.getContainingBox(position);
+        if (box == null || !this.isValidBlock(position)) {
+            return false;
+        }
+        double penalty = getEdgePenalty(position, box);
+        return ThreadLocalRandom.current().nextDouble() < penalty;
+    }
+
+    private static double getEdgePenalty(BlockPosition pos, BlockBBox box) {
+        // penalize edges because they suck
+        double distX = Math.min(pos.blockX() - box.getMinX(), box.getMaxX() - pos.blockX());
+        double distZ = Math.min(pos.blockZ() - box.getMinZ(), box.getMaxZ() - pos.blockZ());
+        if (distX < 0d || distZ < 0d) {
+            return 0d;
+        }
+        return Math.min(1d, distX / EDGE_PENALTY_RANGE)
+                * Math.min(1d, distZ / EDGE_PENALTY_RANGE);
+    }
+
     private void placeBlock(BlockPosition pos) {
         if (!this.blocks.isEmpty()) {
             BlockPosition prev = this.blocks.getLast();
@@ -114,6 +194,9 @@ public class JumpInstance {
                     + NumberConversions.square(prev.blockZ() - pos.blockZ()));
             this.previousJumpDistance = Math.max(
                     horizontal + (pos.blockY() - prev.blockY()) * BlockGenerator.GRAVITY_FACTOR, 0.1);
+            if (horizontal > 1e-6d) {
+                this.lastJumpAngle = Math.atan2(pos.blockZ() - prev.blockZ(), pos.blockX() - prev.blockX());
+            }
         }
         Block block = this.world.getBlockAt(pos.blockX(), pos.blockY(), pos.blockZ());
         block.setType(this.blocks.isEmpty() ? this.material.concrete() : this.material.glass(), false);

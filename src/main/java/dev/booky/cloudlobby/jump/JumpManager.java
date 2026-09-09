@@ -94,12 +94,16 @@ public class JumpManager {
     }
 
     public boolean isInBox(BlockPosition position) {
+        return this.getContainingBox(position) != null;
+    }
+
+    public @Nullable BlockBBox getContainingBox(BlockPosition position) {
         for (BlockBBox box : this.manager.getConfig().getJump().getBoundingBoxes()) {
             if (box.contains(position.blockX(), position.blockY(), position.blockZ())) {
-                return true;
+                return box;
             }
         }
-        return false;
+        return null;
     }
 
     public BlockPosition getRandomStartBlock() {

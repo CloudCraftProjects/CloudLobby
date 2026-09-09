@@ -16,7 +16,7 @@ import java.util.function.Predicate;
 @NullMarked
 public final class BlockGenerator {
 
-    public static final int MAX_TRIES = 250;
+    public static final int MAX_TRIES = 512;
     public static final double GRAVITY_FACTOR = 0.8d;
 
     private Layer[] layers = new Layer[0];
@@ -42,7 +42,7 @@ public final class BlockGenerator {
     }
 
     public BlockPosition getRandomBlock(Position center, Random random, double previousDistance, Predicate<BlockPosition> predicate) {
-        return this.getRandomBlock(center, random, previousDistance, -Layer.TAU, Layer.TAU, predicate);
+        return this.getRandomBlock(center, random, previousDistance, -Layer.TAU, Layer.TAU, predicate, predicate);
     }
 
     public BlockPosition getRandomBlock(
@@ -50,17 +50,26 @@ public final class BlockGenerator {
             float angleMin, float angleMax,
             Predicate<BlockPosition> predicate
     ) {
+        return this.getRandomBlock(center, random, previousDistance, angleMin, angleMax, predicate, predicate);
+    }
+
+    public BlockPosition getRandomBlock(
+            Position center, Random random, double previousDistance,
+            float angleMin, float angleMax,
+            Predicate<BlockPosition> primaryPredicate,
+            Predicate<BlockPosition> fallbackPredicate
+    ) {
         for (int i = 0; i < MAX_TRIES; i++) {
             BlockPosition pos = this.getRandomBlock(center, random, previousDistance, angleMin, angleMax);
-            if (predicate.test(pos)) {
+            if (primaryPredicate.test(pos)) {
                 return pos;
             }
         }
-        // check again without angle restriction
+        // check again without angle restriction, using relaxed predicate
         int i = 0;
         while (true) {
             BlockPosition pos = this.getRandomBlock(center, random, previousDistance);
-            if (i++ == MAX_TRIES || predicate.test(pos)) {
+            if (i++ == MAX_TRIES || fallbackPredicate.test(pos)) {
                 return pos;
             }
         }
