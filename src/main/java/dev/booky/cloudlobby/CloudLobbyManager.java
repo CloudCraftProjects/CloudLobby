@@ -3,7 +3,7 @@ package dev.booky.cloudlobby;
 
 import dev.booky.cloudcore.config.ConfigurateLoader;
 import dev.booky.cloudcore.util.BlockBBox;
-import dev.jorel.commandapi.CommandAPIBukkit;
+import dev.jorel.commandapi.CommandAPIPaper;
 import dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
@@ -73,7 +73,7 @@ public final class CloudLobbyManager {
     public WrapperCommandSyntaxException fail(Component message) {
         Component coloredMsg = text().append(message).color(RED).build();
         Component prefixedMsg = PREFIX.append(coloredMsg);
-        return CommandAPIBukkit.failWithAdventureComponent(prefixedMsg);
+        return CommandAPIPaper.failWithAdventureComponent(prefixedMsg);
     }
 
     public void message(Audience audience, String message) {

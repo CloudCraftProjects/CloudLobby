@@ -30,12 +30,12 @@ dependencies {
     }
 
     compileOnlyApi(libs.cloudcore)
-    compileOnlyApi(libs.commandapi.bukkit.core)
+    compileOnlyApi(libs.commandapi.paper.core)
     implementation(libs.bstats.bukkit)
 
     // testserver dependency plugins (maven)
     plugin(variantOf(libs.cloudcore) { classifier("all") })
-    plugin(libs.commandapi.bukkit.plugin)
+    plugin(libs.commandapi.paper.plugin)
 }
 
 java {
@@ -59,14 +59,14 @@ publishing {
 
 bukkit {
     main = "$group.cloudlobby.CloudLobbyMain"
-    apiVersion = "1.20"
+    apiVersion = "1.21.11"
     authors = listOf("booky10")
     depend = listOf("CommandAPI", "CloudCore")
 }
 
 tasks {
     runServer {
-        minecraftVersion("1.21.4")
+        minecraftVersion("1.21.11")
 
         pluginJars.from(plugin.resolve())
         downloadPlugins {
@@ -75,6 +75,13 @@ tasks {
                 "v${libs.versions.debuggery.get()}",
                 "debuggery-bukkit-${libs.versions.debuggery.get()}.jar"
             )
+        }
+    }
+
+    withType<Jar> {
+        manifest {
+            // we don't use any vanilla internals, no need to remap this plugin
+            attributes("paperweight-mappings-namespace" to "mojang")
         }
     }
 

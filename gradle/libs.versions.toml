@@ -3,14 +3,14 @@ pluginyml = "0.6.0"
 runtask = "3.1.0"
 shadow = "9.6.1"
 
-paper = "1.21.4-R0.1-SNAPSHOT"
+paper = "1.21.11-R0.1-SNAPSHOT"
 bstats = "3.2.1"
 
-cloudcore = "1.1.0-SNAPSHOT"
+cloudcore = "1.1.1-SNAPSHOT"
 
 caffeine = "3.2.4"
 
-commandapi = "10.0.0"
+commandapi = "12.0.0"
 debuggery = "1.5.1"
 
 [plugins]
@@ -24,5 +24,5 @@ bstats-bukkit = { module = "org.bstats:bstats-bukkit", version.ref = "bstats" }
 
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
 cloudcore = { module = "dev.booky:cloudcore", version.ref = "cloudcore" }
-commandapi-bukkit-core = { module = "dev.jorel:commandapi-bukkit-core", version.ref = "commandapi" }
-commandapi-bukkit-plugin = { module = "dev.jorel:commandapi-bukkit-plugin", version.ref = "commandapi" }
+commandapi-paper-core = { module = "dev.jorel:commandapi-paper-core", version.ref = "commandapi" }
+commandapi-paper-plugin = { module = "dev.jorel:commandapi-paper-plugin", version.ref = "commandapi" }
