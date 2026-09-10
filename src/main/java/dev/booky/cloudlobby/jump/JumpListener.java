@@ -57,11 +57,11 @@ public class JumpListener implements Listener {
         if (instance == null || !instance.hasStarted()) {
             return;
         }
-        List<BlockPosition> blocks = instance.getBlocks();
+        List<JumpInstance.JumpBlock> blocks = instance.getBlocks();
         if (blocks.size() < 2) {
             return; // safeguard
         }
-        BlockPosition nextBlockPos = blocks.get(1);
+        BlockPosition nextBlockPos = blocks.get(1).getPosition();
         BoundingBox nextBlockBBox = new BoundingBox(
                 nextBlockPos.x(), nextBlockPos.y(), nextBlockPos.z(),
                 nextBlockPos.x() + 1d, nextBlockPos.y() + 1d, nextBlockPos.z() + 1d
@@ -78,9 +78,10 @@ public class JumpListener implements Listener {
 
         // check if player fell off
         double minY = Double.MAX_VALUE;
-        for (BlockPosition block : blocks) {
-            if (block.y() < minY) {
-                minY = block.y();
+        for (JumpInstance.JumpBlock block : blocks) {
+            BlockPosition pos = block.getPosition();
+            if (pos.y() < minY) {
+                minY = pos.y();
             }
         }
         if (to.getY() + 1e-6d < minY + 0.4d) {
@@ -90,10 +91,11 @@ public class JumpListener implements Listener {
 
         // ensure player doesn't move too far away from jump blocks
         double minDistSq = Double.MAX_VALUE;
-        for (BlockPosition block : blocks) {
-            double distSq = NumberConversions.square(block.x() - to.getX())
-                    + NumberConversions.square(block.y() - to.getY())
-                    + NumberConversions.square(block.z() - to.getZ());
+        for (JumpInstance.JumpBlock block : blocks) {
+            BlockPosition pos = block.getPosition();
+            double distSq = NumberConversions.square(pos.x() - to.getX())
+                    + NumberConversions.square(pos.y() - to.getY())
+                    + NumberConversions.square(pos.z() - to.getZ());
             if (distSq < minDistSq) {
                 minDistSq = distSq;
             }

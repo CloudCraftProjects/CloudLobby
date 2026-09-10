@@ -13,12 +13,14 @@ import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.entity.BlockDisplay;
+import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.Slime;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.util.NumberConversions;
 import org.joml.Math;
+import org.joml.Matrix4f;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -42,7 +44,8 @@ public class JumpInstance {
     private final World world;
     private final JumpMaterial material;
 
-    private final List<BlockPosition> blocks = new LinkedList<>();
+    private final List<JumpBlock> blocks = new LinkedList<>();
+    private @Nullable ScheduledTask actionbarTask;
 
     private boolean started = false;
     private boolean stopped = false;
@@ -52,9 +55,6 @@ public class JumpInstance {
 
     private double previousJumpDistance = -1;
     private float lastJumpAngle = Float.NaN;
-
-    private @Nullable ScheduledTask actionbarTask;
-    private WeakReference<@Nullable Entity> glowingEntity = new WeakReference<>(null);
 
     private boolean wasAllowFlight;
 
@@ -92,9 +92,9 @@ public class JumpInstance {
                 (float) blendAngles(this.lastJumpAngle, playerAngle, JUMP_DIR_WEIGHT);
 
         float viewRange = Math.toRadians(this.manager.getManager().getConfig().getJump().getViewRange())
-                + this.calculateAngleWiden(this.blocks.getLast(), angle);
+                + this.calculateAngleWiden(this.blocks.getLast().getPosition(), angle);
         this.placeBlock(this.manager.getBlockGenerator().getRandomBlock(
-                this.blocks.getLast(), random,
+                this.blocks.getLast().getPosition(), random,
                 this.previousJumpDistance,
                 angle - viewRange,
                 angle + viewRange,
@@ -189,7 +189,7 @@ public class JumpInstance {
 
     private void placeBlock(BlockPosition pos) {
         if (!this.blocks.isEmpty()) {
-            BlockPosition prev = this.blocks.getLast();
+            BlockPosition prev = this.blocks.getLast().position;
             double horizontal = Math.sqrt(NumberConversions.square(prev.blockX() - pos.blockX())
                     + NumberConversions.square(prev.blockZ() - pos.blockZ()));
             this.previousJumpDistance = Math.max(
@@ -198,26 +198,28 @@ public class JumpInstance {
                 this.lastJumpAngle = Math.atan2(pos.blockZ() - prev.blockZ(), pos.blockX() - prev.blockX());
             }
         }
-        Block block = this.world.getBlockAt(pos.blockX(), pos.blockY(), pos.blockZ());
-        block.setType(this.blocks.isEmpty() ? this.material.concrete() : this.material.glass(), false);
-        block.getRelative(0, 1, 0).setType(Material.LIGHT, false);
-        this.blocks.addLast(pos);
+        JumpBlock block = new JumpBlock(pos);
+        block.updateBlock(this.blocks.isEmpty());
+        // mark next block as glowing
+        if (this.blocks.size() == 1) {
+            block.spawnEntity().setGlowing(true);
+        }
+        this.blocks.addLast(block);
     }
 
     private void destroyBlock(boolean update) {
         if (this.blocks.isEmpty()) {
             return; // silently ignore
         }
-        BlockPosition pos = this.blocks.removeFirst();
-        Block block = this.world.getBlockAt(pos.blockX(), pos.blockY(), pos.blockZ());
-        block.setType(Material.AIR, false);
-        block.getRelative(0, 1, 0).setType(Material.AIR, false);
+        this.blocks.removeFirst().removeBlock();
 
         // update material of new block at head
         if (update && !this.blocks.isEmpty()) {
-            BlockPosition headPos = this.blocks.getFirst();
-            Block headBlock = this.world.getBlockAt(headPos.blockX(), headPos.blockY(), headPos.blockZ());
-            headBlock.setType(this.material.concrete(), false);
+            this.blocks.getFirst().updateBlock(true);
+            // mark next block as glowing
+            if (this.blocks.size() > 1) {
+                this.blocks.get(1).spawnEntity().setGlowing(true);
+            }
         }
     }
 
@@ -230,7 +232,6 @@ public class JumpInstance {
     public void advance() {
         this.destroyBlock(true);
         this.generateBlock();
-        this.updateGlowing();
 
         this.score++;
         this.updateActionbar();
@@ -243,9 +244,7 @@ public class JumpInstance {
     }
 
     void start() {
-        this.updateGlowing();
-
-        Location spawnPos = this.blocks.getFirst().toLocation(this.world);
+        Location spawnPos = this.blocks.getFirst().getPosition().toLocation(this.world);
         spawnPos.add(0.5d, 1.025d, 0.5d);
         spawnPos.setYaw(this.player.getYaw());
         spawnPos.setPitch(this.player.getPitch());
@@ -280,7 +279,6 @@ public class JumpInstance {
         for (int i = 0, count = this.blocks.size(); i < count; i++) {
             this.destroyBlock(false);
         }
-        this.updateGlowing();
 
         // send user feedback
         if (this.score > this.highscore) {
@@ -319,47 +317,87 @@ public class JumpInstance {
         }
     }
 
-    private void updateGlowing() {
-        Entity existing = this.glowingEntity.get();
-        if (existing != null) {
-            try {
-                existing.remove();
-            } catch (Throwable ignored) {
-            }
-            this.glowingEntity = new WeakReference<>(null);
-        }
-        // we need at least the next block to show glowing effect
-        if (this.blocks.size() < 2) {
-            return;
-        }
-        // spawn slime at size 2, size is exactly 1x1x1
-        Location spawnLoc = this.blocks.get(1).toLocation(this.world);
-        spawnLoc.add(0.5d, 0d, 0.5d);
-        this.world.spawn(spawnLoc, Slime.class, false, entity -> {
-            // only visible to jumping player
-            entity.setVisibleByDefault(false);
-            this.player.showEntity(this.manager.getManager().getPlugin(), entity);
-
-            // discard once unloaded
-            entity.setPersistent(false);
-
-            entity.setWander(false);
-            entity.setGravity(false);
-            entity.setInvulnerable(true);
-            entity.setInvisible(true);
-            entity.setAI(false);
-            entity.setSize(2); // 1x1x1 bbox
-            entity.setGlowing(true);
-
-            this.glowingEntity = new WeakReference<>(entity);
-        });
-    }
-
     public World getWorld() {
         return this.world;
     }
 
-    public List<BlockPosition> getBlocks() {
+    public List<JumpBlock> getBlocks() {
         return this.blocks;
+    }
+
+    public final class JumpBlock {
+
+        private final BlockPosition position;
+        private final Block block;
+        private WeakReference<@Nullable Entity> entity = new WeakReference<>(null);
+
+        public JumpBlock(BlockPosition position) {
+            this.position = position;
+            this.block = JumpInstance.this.world.getBlockAt(
+                    position.blockX(), position.blockY(), position.blockZ());
+            this.block.getRelative(0, 1, 0).setType(Material.LIGHT, false);
+        }
+
+        public Entity spawnEntity() {
+            Entity entity = this.entity.get();
+            if (entity != null && entity.isValid()) {
+                return entity;
+            }
+            // spawn inverse scaled block display, increases contrast and acts as glowing block outline
+            Location spawnLoc = this.position.toLocation(JumpInstance.this.world);
+            return spawnLoc.getWorld().spawn(spawnLoc, BlockDisplay.class, false, display -> {
+                // only visible to jumping player
+                display.setVisibleByDefault(false);
+                JumpInstance.this.player.showEntity(JumpInstance.this.manager.getManager().getPlugin(), display);
+
+                // discard once unloaded
+                display.setPersistent(false);
+
+                display.setBlock(JumpInstance.this.material.concrete().createBlockData());
+                display.setTransformationMatrix(new Matrix4f()
+                        .scaleLocal(-1f)
+                        .translateLocal(1f, 1f, 1f));
+                display.setBrightness(new Display.Brightness(15, 15));
+
+                this.entity = new WeakReference<>(display);
+            });
+        }
+
+        public void removeEntity() {
+            Entity entity = this.entity.get();
+            if (entity != null) {
+                try {
+                    entity.remove();
+                } catch (Throwable ignored) {
+                }
+                this.entity = new WeakReference<>(null);
+            }
+        }
+
+        public void updateBlock(boolean head) {
+            Material material = head ? JumpInstance.this.material.concrete() : JumpInstance.this.material.glass();
+            if (this.block.getType() != material) {
+                this.block.setType(material, false);
+                // immediately send block change, increases the chance that
+                // the client doesn't make the block display flicker
+                JumpInstance.this.player.sendBlockChange(this.block.getLocation(), material.createBlockData());
+            }
+
+            if (head) {
+                this.removeEntity();
+            } else {
+                this.spawnEntity();
+            }
+        }
+
+        public void removeBlock() {
+            this.removeEntity();
+            this.block.setType(Material.AIR, false);
+            this.block.getRelative(0, 1, 0).setType(Material.AIR, false);
+        }
+
+        public BlockPosition getPosition() {
+            return this.position;
+        }
     }
 }
