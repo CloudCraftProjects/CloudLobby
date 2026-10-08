@@ -17,13 +17,18 @@ import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.persistence.PersistentDataType;
 import org.geysermc.floodgate.api.FloodgateApi;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
 
@@ -101,6 +106,42 @@ public final class MenuItemListener implements Listener {
         } else {
             Bukkit.dispatchCommand(player, command);
         }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onInventoryClick(InventoryClickEvent event) {
+        // prevent menu items from being moved around
+        if (this.isMenuItem(event.getCurrentItem()) || this.isMenuItem(event.getCursor())) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onInventoryDrag(InventoryDragEvent event) {
+        // prevent menu items from being moved around by dragging
+        if (this.isMenuItem(event.getOldCursor()) || event.getNewItems().values().stream().anyMatch(this::isMenuItem)) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onSwapHandItems(PlayerSwapHandItemsEvent event) {
+        // prevent menu items from being swapped into the offhand
+        if (this.isMenuItem(event.getMainHandItem()) || this.isMenuItem(event.getOffHandItem())) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onDropItem(PlayerDropItemEvent event) {
+        // prevent menu items from being dropped
+        if (this.isMenuItem(event.getItemDrop().getItemStack())) {
+            event.setCancelled(true);
+        }
+    }
+
+    private boolean isMenuItem(@Nullable ItemStack item) {
+        return item != null && item.getPersistentDataContainer().has(this.itemKey, PersistentDataType.STRING);
     }
 
     private boolean canUse(Player player, MenuItemConfig config) {
