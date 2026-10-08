@@ -13,6 +13,8 @@ caffeine = "3.2.4"
 commandapi = "12.0.0"
 debuggery = "1.5.1"
 
+floodgate = "2.2.5-SNAPSHOT"
+
 [plugins]
 pluginyml-bukkit = { id = "net.minecrell.plugin-yml.bukkit", version.ref = "pluginyml" }
 run-paper = { id = "xyz.jpenilla.run-paper", version.ref = "runtask" }
@@ -26,3 +28,4 @@ caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "c
 cloudcore = { module = "dev.booky:cloudcore", version.ref = "cloudcore" }
 commandapi-paper-core = { module = "dev.jorel:commandapi-paper-core", version.ref = "commandapi" }
 commandapi-paper-plugin = { module = "dev.jorel:commandapi-paper-plugin", version.ref = "commandapi" }
+floodgate-api = { module = "org.geysermc.floodgate:api", version.ref = "floodgate" }

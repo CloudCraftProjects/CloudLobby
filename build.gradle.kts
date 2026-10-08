@@ -20,6 +20,7 @@ repositories {
 
 dependencies {
     compileOnly(libs.paper.api)
+    compileOnly(libs.floodgate.api)
 
     // downloaded at runtime using library loader
     sequenceOf(
@@ -62,6 +63,7 @@ bukkit {
     apiVersion = "1.21.11"
     authors = listOf("booky10")
     depend = listOf("CommandAPI", "CloudCore")
+    softDepend = listOf("floodgate")
 }
 
 tasks {

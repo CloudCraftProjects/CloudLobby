@@ -37,7 +37,7 @@ public final class CloudLobbyManager {
             .append(text('L', AQUA, BOLD))
             .append(text(']', GRAY))
             .appendSpace()
-            .build();
+            .asComponent();
     private static final ConfigurateLoader<?, ?> CONFIG_LOADER = ConfigurateLoader.yamlLoader()
             .withAllDefaultSerializers().build();
 

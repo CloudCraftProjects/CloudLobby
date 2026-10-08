@@ -8,6 +8,7 @@ import dev.booky.cloudlobby.jump.JumpManager;
 import dev.booky.cloudlobby.listeners.DoubleJumpListener;
 import dev.booky.cloudlobby.listeners.JoinQuitMessageListener;
 import dev.booky.cloudlobby.listeners.MiscListener;
+import dev.booky.cloudlobby.listeners.MenuItemListener;
 import dev.booky.cloudlobby.listeners.MoveListener;
 import dev.booky.cloudlobby.listeners.PvPListener;
 import org.bukkit.Bukkit;
@@ -54,6 +55,7 @@ public final class CloudLobbyMain extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new JoinQuitMessageListener(), this);
         Bukkit.getPluginManager().registerEvents(new MiscListener(), this);
         Bukkit.getPluginManager().registerEvents(new MoveListener(this.manager), this);
+        Bukkit.getPluginManager().registerEvents(new MenuItemListener(this.manager), this);
         Bukkit.getPluginManager().registerEvents(new PvPListener(this.manager), this);
 
         Bukkit.getServicesManager().register(CloudLobbyManager.class, this.manager, this, ServicePriority.Normal);
